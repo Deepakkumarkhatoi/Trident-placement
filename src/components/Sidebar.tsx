@@ -1,5 +1,5 @@
 import { useLocation, Link } from "react-router-dom";
-import { LayoutDashboard, FileText, Building2, Bell, User } from "lucide-react";
+import { LayoutDashboard, FileText, Building2, Bell, User, X } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const navItems = [
@@ -10,17 +10,31 @@ const navItems = [
   { icon: User, label: "Profile", path: "/profile" },
 ];
 
-const Sidebar = () => {
+interface SidebarProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+const Sidebar = ({ open, onClose }: SidebarProps) => {
   const location = useLocation();
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-60 bg-sidebar border-r border-sidebar-border flex flex-col z-50">
-      <div className="flex items-center gap-3 px-5 py-5">
-        <img src={logo} alt="T&P Portal" className="w-9 h-9 rounded-lg" />
-        <div>
-          <p className="text-xs font-semibold tracking-widest uppercase text-sidebar-foreground/60">T&P Portal</p>
-          <p className="text-sm font-bold text-sidebar-accent-foreground">TAT College</p>
+    <aside
+      className={`fixed left-0 top-0 h-screen w-60 bg-sidebar border-r border-sidebar-border flex flex-col z-50 transition-transform duration-300 lg:translate-x-0 ${
+        open ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
+      <div className="flex items-center justify-between px-5 py-5">
+        <div className="flex items-center gap-3">
+          <img src={logo} alt="T&P Portal" className="w-9 h-9 rounded-lg" />
+          <div>
+            <p className="text-xs font-semibold tracking-widest uppercase text-sidebar-foreground/60">T&P Portal</p>
+            <p className="text-sm font-bold text-sidebar-accent-foreground">TAT College</p>
+          </div>
         </div>
+        <button onClick={onClose} className="lg:hidden text-muted-foreground hover:text-foreground">
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       <nav className="flex-1 px-3 mt-4 space-y-1">
@@ -30,6 +44,7 @@ const Sidebar = () => {
             <Link
               key={item.label}
               to={item.path}
+              onClick={onClose}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 isActive
                   ? "bg-sidebar-accent text-sidebar-primary"

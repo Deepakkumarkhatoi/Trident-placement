@@ -16,7 +16,7 @@ interface DriveCardProps {
 const DriveCard = ({ company, role, type, lpa, cgpa, lastDate, description, initial, color, delay = 0 }: DriveCardProps) => {
   return (
     <div
-      className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between hover:border-primary/30 transition-all duration-300 opacity-0 animate-fade-in min-w-[300px]"
+      className="bg-card border border-border rounded-xl p-4 md:p-5 flex flex-col justify-between hover:border-primary/30 transition-all duration-300 opacity-0 animate-fade-in min-w-0"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div>
