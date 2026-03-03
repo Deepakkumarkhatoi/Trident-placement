@@ -1,20 +1,29 @@
-import { Search, Bell, Moon, Sun } from "lucide-react";
+import { Search, Bell, Moon, Sun, Menu } from "lucide-react";
 import { useTheme } from "next-themes";
 
-const TopBar = () => {
+interface TopBarProps {
+  onMenuToggle: () => void;
+}
+
+const TopBar = ({ onMenuToggle }: TopBarProps) => {
   const { theme, setTheme } = useTheme();
 
   return (
-    <header className="h-16 border-b border-border flex items-center justify-between px-8 bg-background/80 backdrop-blur-sm sticky top-0 z-40">
-      <div className="relative flex-1 max-w-xl">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Search drives, companies, roles..."
-          className="w-full bg-secondary border-none rounded-lg pl-10 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-        />
+    <header className="h-14 md:h-16 border-b border-border flex items-center justify-between px-4 md:px-8 bg-background/80 backdrop-blur-sm sticky top-0 z-40">
+      <div className="flex items-center gap-3 flex-1">
+        <button onClick={onMenuToggle} className="lg:hidden text-muted-foreground hover:text-foreground">
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="relative flex-1 max-w-xl hidden sm:block">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search drives, companies, roles..."
+            className="w-full bg-secondary border-none rounded-lg pl-10 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+          />
+        </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 md:gap-2">
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
