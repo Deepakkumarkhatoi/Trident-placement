@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400..800&family=Space+Grotesk:wght@500;700&display=swap");
+
+@layer base {
+  :root {
+    /* Light theme (day mode) */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 46%;
+    --primary: 200 80% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --accent: 200 80% 50%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 200 80% 50%;
+    --radius: 0.75rem;
+    --chart-1: 200 80% 50%;
+    --chart-2: 280 85% 55%;
+    --chart-3: 120 100% 40%;
+    --chart-4: 40 100% 55%;
+    --chart-5: 260 100% 50%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 200 80% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 200 80% 50%;
+
+    /* Status / semantic colors (light) */
+    --success: 142 76% 36%;
+    --warning: 38 92% 50%;
+    --info: 199 89% 48%;
+
+    color-scheme: light;
+  }
+
+  .dark {
+    /* Dark theme (night mode) */
+    --background: 216 30% 6%;
+    --foreground: 0 0% 95%;
+    --card: 216 28% 10%;
+    --card-foreground: 0 0% 95%;
+    --popover: 216 30% 6%;
+    --popover-foreground: 0 0% 95%;
+    --muted: 216 20% 20%;
+    --muted-foreground: 0 0% 60%;
+    --primary: 200 80% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 216 28% 10%;
+    --secondary-foreground: 200 80% 50%;
+    --accent: 200 80% 50%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 216 20% 18%;
+    --input: 216 20% 18%;
+    --ring: 200 80% 50%;
+    --chart-1: 200 80% 50%;
+    --chart-2: 280 85% 55%;
+    --chart-3: 120 100% 45%;
+    --chart-4: 40 100% 55%;
+    --chart-5: 260 100% 50%;
+
+    --sidebar-background: 216 25% 8%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 200 80% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 200 80% 50%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 216 20% 18%;
+    --sidebar-ring: 200 80% 50%;
+
+    /* Status / semantic colors (dark) */
+    --success: 142 70% 50%;
+    --warning: 40 100% 55%;
+    --info: 190 95% 55%;
+
+    color-scheme: dark;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    height: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter", sans-serif;
+    height: 100%;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 600;
+  }
+
+  h1 {
+    @apply text-4xl font-bold;
+  }
+
+  h2 {
+    @apply text-3xl font-bold;
+  }
+
+  h3 {
+    @apply text-2xl font-bold;
+  }
+
+  h4 {
+    @apply text-xl font-bold;
+  }
+
+  h5 {
+    @apply text-lg font-bold;
+  }
+
+  h6 {
+    @apply text-base font-bold;
+  }
+}
+
+@layer utilities {
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+}
