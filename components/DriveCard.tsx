@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 interface DriveCardProps {
+  id: string;
   company: string;
   role: string;
   type: 'On-Campus' | 'Virtual';
@@ -13,7 +15,7 @@ interface DriveCardProps {
   delay?: number;
 }
 
-const DriveCard = ({ company, role, type, lpa, cgpa, lastDate, description, initial, color, delay = 0 }: DriveCardProps) => {
+const DriveCard = ({ id, company, role, type, lpa, cgpa, lastDate, description, initial, color, delay = 0 }: DriveCardProps) => {
   return (
     <div
       className="bg-card border border-border rounded-xl p-4 md:p-5 flex flex-col justify-between hover:border-primary/30 transition-all duration-300 opacity-0 animate-fade-in min-w-0"
@@ -63,8 +65,8 @@ const DriveCard = ({ company, role, type, lpa, cgpa, lastDate, description, init
       </div>
 
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" className="flex-1 text-xs">
-          View Details
+        <Button variant="outline" size="sm" className="flex-1 text-xs" asChild>
+          <Link href={`/drives/${id}`}>View Details</Link>
         </Button>
         <Button size="sm" className="flex-1 text-xs">
           Apply Now →
