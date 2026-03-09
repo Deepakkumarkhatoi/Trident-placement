@@ -2,10 +2,20 @@
 
 export const dynamic = 'force-dynamic';
 
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { CheckCircle2, AlertCircle, Info, Calendar, Building2 } from 'lucide-react';
 
 type NotifType = 'success' | 'warning' | 'info' | 'event' | 'drive';
+
+interface Notification {
+  id: string | number;
+  type: NotifType;
+  title: string;
+  desc: string;
+  time: string;
+  unread: boolean;
+}
 
 const iconMap: Record<NotifType, React.ElementType> = {
   success: CheckCircle2,
@@ -23,16 +33,13 @@ const colorMap: Record<NotifType, string> = {
   drive: 'text-primary bg-primary/10',
 };
 
-const notifications = [
-  { id: 1, type: 'success' as NotifType, title: 'Shortlisted at TechCorp Solutions', desc: 'You\'ve been shortlisted for the Technical Interview round.', time: '2 hours ago', unread: false },
-  { id: 2, type: 'drive' as NotifType, title: 'New Drive: NexGen Solutions', desc: 'DevOps Engineer position open. Package: 10 LPA. Apply before 02-04-25.', time: '5 hours ago', unread: false },
-  { id: 3, type: 'event' as NotifType, title: 'Pre-Placement Talk — InnoTech Labs', desc: 'Scheduled for March 5, 2026 at 10:00 AM in Seminar Hall B.', time: '1 day ago', unread: false },
-  { id: 4, type: 'warning' as NotifType, title: 'Application deadline approaching', desc: 'DataFlow Inc drive closes on 20-03-25. Complete your application.', time: '1 day ago', unread: false },
-  { id: 5, type: 'info' as NotifType, title: 'Profile incomplete', desc: 'Add your resume and CGPA details to increase visibility to recruiters.', time: '3 days ago', unread: false },
-  { id: 6, type: 'success' as NotifType, title: 'Offer received from InnoTech Labs', desc: 'Congratulations! You\'ve received an offer for ML Engineer at 12 LPA.', time: '5 days ago', unread: false },
-];
+export default function NotificationsPage() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
 
-export default function Notifications() {
+  // Note: Notifications endpoint not available in backend API
+  // You can add GET /api/notifications endpoint in your backend if needed
+
   const unreadCount = notifications.filter((n) => n.unread).length;
 
   return (
@@ -45,32 +52,42 @@ export default function Notifications() {
         <button className="text-xs font-semibold text-primary hover:underline">Mark all as read</button>
       </div>
 
-      <div className="space-y-3">
-        {notifications.map((n, i) => {
-          const Icon = iconMap[n.type];
-          return (
-            <div
-              key={n.id}
-              className={`bg-card border rounded-xl p-5 flex items-start gap-4 transition-all hover:border-primary/30 opacity-0 animate-fade-in ${
-                n.unread ? 'border-primary/20' : 'border-border'
-              }`}
-              style={{ animationDelay: `${i * 80}ms` }}
-            >
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${colorMap[n.type]}`}>
-                <Icon className="w-[18px] h-[18px]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-foreground">{n.title}</h3>
-                  {n.unread && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-card border border-border rounded-xl p-5 h-20 animate-pulse"></div>
+          ))}
+        </div>
+      ) : notifications.length === 0 ? (
+        <div className="text-center text-muted-foreground py-10">No notifications at the moment.</div>
+      ) : (
+        <div className="space-y-3">
+          {notifications.map((n, i) => {
+            const Icon = iconMap[n.type];
+            return (
+              <div
+                key={n.id}
+                className={`bg-card border rounded-xl p-5 flex items-start gap-4 transition-all hover:border-primary/30 opacity-0 animate-fade-in ${
+                  n.unread ? 'border-primary/20' : 'border-border'
+                }`}
+                style={{ animationDelay: `${i * 80}ms` }}
+              >
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${colorMap[n.type]}`}>
+                  <Icon className="w-[18px] h-[18px]" />
                 </div>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{n.desc}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-foreground">{n.title}</h3>
+                    {n.unread && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{n.desc}</p>
+                </div>
+                <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0">{n.time}</span>
               </div>
-              <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0">{n.time}</span>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </DashboardLayout>
   );
 }

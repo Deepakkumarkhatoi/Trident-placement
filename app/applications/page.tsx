@@ -2,9 +2,11 @@
 
 export const dynamic = 'force-dynamic';
 
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { fetchApplications, ApplicationData } from '@/lib/backend';
 import { ExternalLink } from 'lucide-react';
 
 type Status = 'Applied' | 'In Review' | 'Shortlisted' | 'Selected' | 'Rejected';
@@ -17,15 +19,29 @@ const statusStyles: Record<Status, string> = {
   Rejected: 'bg-destructive/15 text-destructive border-destructive/30',
 };
 
-const applications = [
-  { id: 1, company: 'TechCorp Solutions', role: 'Software Engineer', appliedOn: '28-02-2026', status: 'Shortlisted' as Status, round: 'Technical Interview', lpa: '8 LPA' },
-  { id: 2, company: 'DataFlow Inc', role: 'Data Analyst', appliedOn: '25-02-2026', status: 'In Review' as Status, round: 'Resume Screening', lpa: '6.5 LPA' },
-  { id: 3, company: 'CloudNine Systems', role: 'Full Stack Developer', appliedOn: '22-02-2026', status: 'Applied' as Status, round: '—', lpa: '9 LPA' },
-  { id: 4, company: 'InnoTech Labs', role: 'ML Engineer', appliedOn: '18-02-2026', status: 'Selected' as Status, round: 'Offer Letter', lpa: '12 LPA' },
-  { id: 5, company: 'ByteWave Corp', role: 'Backend Developer', appliedOn: '15-02-2026', status: 'Rejected' as Status, round: 'HR Interview', lpa: '7 LPA' },
-];
-
 export default function Applications() {
+  const [applications, setApplications] = useState<ApplicationData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadApplications = async () => {
+      try {
+        setLoading(true);
+       
+        const studentId = localStorage.getItem('regdno') || '12345'; 
+        
+        const data = await fetchApplications(studentId);
+        setApplications(data);
+      } catch (error) {
+        console.error('Error loading applications:', error);
+        setApplications([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadApplications();
+  }, []);
   return (
     <DashboardLayout>
       <h1 className="text-2xl font-display font-bold text-foreground">My Applications</h1>
@@ -45,38 +61,44 @@ export default function Applications() {
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border">
-                {['Company', 'Role', 'Package', 'Applied On', 'Current Round', 'Status', ''].map((h) => (
-                  <th key={h} className="text-left px-5 py-3 text-[11px] tracking-widest uppercase text-muted-foreground font-semibold">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {applications.map((app, i) => (
-                <tr key={app.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors opacity-0 animate-fade-in" style={{ animationDelay: `${i * 80}ms` }}>
-                  <td className="px-5 py-4 font-medium text-foreground">{app.company}</td>
-                  <td className="px-5 py-4 text-muted-foreground">{app.role}</td>
-                  <td className="px-5 py-4 text-foreground font-semibold">{app.lpa}</td>
-                  <td className="px-5 py-4 text-muted-foreground">{app.appliedOn}</td>
-                  <td className="px-5 py-4 text-muted-foreground">{app.round}</td>
-                  <td className="px-5 py-4">
-                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-md border ${statusStyles[app.status]}`}>
-                      {app.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4">
-                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                      <ExternalLink className="w-4 h-4" />
-                    </Button>
-                  </td>
+        {loading ? (
+          <div className="p-8 text-center text-muted-foreground">Loading applications...</div>
+        ) : applications.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground">No applications found.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  {['Company', 'Role', 'Package', 'Applied On', 'Current Round', 'Status', ''].map((h) => (
+                    <th key={h} className="text-left px-5 py-3 text-[11px] tracking-widest uppercase text-muted-foreground font-semibold">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {applications.map((app, i) => (
+                  <tr key={app.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors opacity-0 animate-fade-in" style={{ animationDelay: `${i * 80}ms` }}>
+                    <td className="px-5 py-4 font-medium text-foreground">{app.company}</td>
+                    <td className="px-5 py-4 text-muted-foreground">{app.role}</td>
+                    <td className="px-5 py-4 text-foreground font-semibold">{app.lpa}</td>
+                    <td className="px-5 py-4 text-muted-foreground">{app.appliedOn}</td>
+                    <td className="px-5 py-4 text-muted-foreground">{app.round}</td>
+                    <td className="px-5 py-4">
+                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-md border ${statusStyles[app.status]}`}>
+                        {app.status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                        <ExternalLink className="w-4 h-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

@@ -5,7 +5,7 @@ interface DriveCardProps {
   id: string;
   company: string;
   role: string;
-  type: 'On-Campus' | 'Virtual';
+  type:  string;
   lpa: string;
   cgpa: string;
   lastDate: string;

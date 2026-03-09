@@ -1,18 +1,36 @@
 'use client';
 
+
 export const dynamic = 'force-dynamic';
 
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import DriveCard from '@/components/DriveCard';
-import { drivesList } from '@/data/drives';
+import { fetchDrives, DriveData } from '@/lib/backend';
 import { Search, Filter } from 'lucide-react';
-import { useState } from 'react';
-
-const allDrives = drivesList;
 
 export default function Drives() {
+  const [allDrives, setAllDrives] = useState<DriveData[]>([]);
   const [filter, setFilter] = useState<'All' | 'On-Campus' | 'Virtual'>('All');
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadDrives = async () => {
+      try {
+        setLoading(true);
+        const drivesData = await fetchDrives();
+        setAllDrives(drivesData);
+      } catch (error) {
+        console.error('Error loading drives:', error);
+        setAllDrives([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDrives();
+  }, []);
 
   const filtered = allDrives.filter((d) => {
     const matchType = filter === 'All' || d.type === filter;
@@ -33,7 +51,8 @@ export default function Drives() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search companies or roles..."
-            className="w-full bg-card border border-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+            disabled={loading}
+            className="w-full bg-card border border-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-50"
           />
         </div>
         <div className="flex gap-2">
@@ -41,7 +60,8 @@ export default function Drives() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold border transition-all ${
+              disabled={loading}
+              className={`px-4 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 ${
                 filter === f
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-card text-muted-foreground border-border hover:border-primary/30'
@@ -54,13 +74,23 @@ export default function Drives() {
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground mb-4">{filtered.length} drives found</p>
+      <p className="text-xs text-muted-foreground mb-4">{loading ? 'Loading...' : `${filtered.length} drives found`}</p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map((d, i) => (
-          <DriveCard key={d.id} {...d} delay={i * 100} />
-        ))}
-      </div>
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-card rounded-lg h-40 animate-pulse"></div>
+          ))}
+        </div>
+      ) : filtered.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filtered.map((d, i) => (
+            <DriveCard key={d.id} {...d} delay={i * 100} />
+          ))}
+        </div>
+      ) : (
+        <p className="text-muted-foreground text-sm">No drives found matching your criteria.</p>
+      )}
     </DashboardLayout>
   );
 }
