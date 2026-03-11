@@ -6,11 +6,12 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import DriveCard from '@/components/DriveCard';
-import { fetchDrives, DriveData } from '@/lib/backend';
+import { fetchDrives, fetchApplications, DriveData } from '@/lib/backend';
 import { Search, Filter } from 'lucide-react';
 
 export default function Drives() {
   const [allDrives, setAllDrives] = useState<DriveData[]>([]);
+  const [appliedDriveIds, setAppliedDriveIds] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<'All' | 'On-Campus' | 'Virtual'>('All');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -21,6 +22,12 @@ export default function Drives() {
         setLoading(true);
         const drivesData = await fetchDrives();
         setAllDrives(drivesData);
+
+        // Fetch applications to get applied drive IDs
+        const studentId = '0601289127';
+        const applications = await fetchApplications(studentId);
+        const appliedIds = new Set(applications.map(app => app.driveId?.toString() || ''));
+        setAppliedDriveIds(appliedIds);
       } catch (error) {
         console.error('Error loading drives:', error);
         setAllDrives([]);
@@ -85,7 +92,7 @@ export default function Drives() {
       ) : filtered.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((d, i) => (
-            <DriveCard key={d.id} {...d} delay={i * 100} />
+            <DriveCard key={d.id} {...d} delay={i * 100} applied={appliedDriveIds.has(d.id.toString())} />
           ))}
         </div>
       ) : (

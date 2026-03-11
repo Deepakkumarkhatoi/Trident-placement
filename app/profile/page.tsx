@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { fetchDashboard, StudentProfile } from '@/lib/backend';
+import { fetchProfile, StudentProfile } from '@/lib/backend';
 import { Mail, Phone, MapPin, GraduationCap, Award, Edit } from 'lucide-react';
 
 export default function Profile() {
@@ -16,13 +16,8 @@ export default function Profile() {
     const loadProfile = async () => {
       try {
         setLoading(true);
-        // Get regdno from localStorage
-        const regdno = localStorage.getItem('regdno') || '12345'; // Default for testing
-        
-        const dashboardData = await fetchDashboard(regdno);
-        if (dashboardData && dashboardData.profile) {
-          setProfile(dashboardData.profile);
-        }
+        const profileData = await fetchProfile();
+        setProfile(profileData);
       } catch (error) {
         console.error('Error loading profile:', error);
       } finally {

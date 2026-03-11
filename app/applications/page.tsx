@@ -27,11 +27,9 @@ export default function Applications() {
     const loadApplications = async () => {
       try {
         setLoading(true);
-       
-        const studentId = localStorage.getItem('regdno') || '12345'; 
-        
-        const data = await fetchApplications(studentId);
-        setApplications(data);
+        const studentId = '0601289127'; ////for tetsing, replace with actual student ID from auth context
+        const apps = await fetchApplications(studentId);
+        setApplications(apps);
       } catch (error) {
         console.error('Error loading applications:', error);
         setApplications([]);

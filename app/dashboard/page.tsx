@@ -6,12 +6,13 @@ import StatsCard from '@/components/StatsCard';
 import DriveCard from '@/components/DriveCard';
 import RecommendedJobs from '@/components/RecommendedJobs';
 import Link from 'next/link';
-import { fetchDashboard, fetchOpenDrives, StatsData, DriveData } from '@/lib/backend';
+import { fetchOpenDrives, fetchApplications, StatsData, DriveData } from '@/lib/backend';
 
 export default function Home() {
   const [dateStr, setDateStr] = useState<string>('');
   const [stats, setStats] = useState<StatsData[]>([]);
   const [drives, setDrives] = useState<DriveData[]>([]);
+  const [appliedDriveIds, setAppliedDriveIds] = useState<Set<string>>(new Set());
   const [studentName, setStudentName] = useState<string>('Student');
   const [loading, setLoading] = useState(true);
 
@@ -30,24 +31,43 @@ export default function Home() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const regdno = localStorage.getItem('regdno');
+        const studentId = '0601289127';
+        
+        // Fetch all open drives and applications
+        const openDrives = await fetchOpenDrives();
+        const applications = await fetchApplications(studentId);
 
-        if (!regdno) {
-          console.error('Student ID not found');
-          setLoading(false);
-          return;
-        }
-
-        const dashboardData = await fetchDashboard(regdno);
-
-        if (dashboardData) {
-          setStats(dashboardData.stats || []);
-          setDrives(dashboardData.drives?.slice(0, 3) || []);
-          setStudentName(dashboardData.name?.split(' ')[0] || 'Student');
-        } else {
-          const openDrives = await fetchOpenDrives();
-          setDrives(openDrives.slice(0, 3));
-        }
+        setDrives(openDrives.slice(0, 3));
+        
+        // Create set of applied drive IDs
+        const appliedIds = new Set(applications.map(app => app.driveId?.toString() || ''));
+        setAppliedDriveIds(appliedIds);
+        
+        // Create stats for dashboard
+        const dashboardStats: StatsData[] = [
+          {
+            label: 'Available Drives',
+            value: openDrives.length,
+            color: 'primary',
+          },
+          {
+            label: 'Applied To',
+            value: applications.length,
+            color: 'success',
+          },
+          {
+            label: 'Shortlisted',
+            value: applications.filter(a => a.status === 'Shortlisted').length,
+            color: 'warning',
+          },
+          {
+            label: 'Selected',
+            value: applications.filter(a => a.status === 'Selected').length,
+            color: 'info',
+          },
+        ];
+        setStats(dashboardStats);
+        setStudentName('Student');
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
@@ -104,7 +124,7 @@ export default function Home() {
         ) : drives.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {drives.map((d, i) => (
-              <DriveCard key={d.id} {...d} delay={400 + i * 150} />
+              <DriveCard key={d.id} {...d} delay={400 + i * 150} applied={appliedDriveIds.has(d.id.toString())} />
             ))}
           </div>
         ) : (

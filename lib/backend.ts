@@ -2,6 +2,46 @@
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND;
 
+// Helper function to map backend drive data to frontend format
+function mapDriveData(backendDrive: any): DriveData {
+  const companyName = backendDrive.companyName || backendDrive.company || '';
+  return {
+    id: backendDrive.id || '',
+    company: companyName,
+    role: backendDrive.role || '',
+    type: backendDrive.type || '',
+    lpa: backendDrive.lpaPackage?.toString() || backendDrive.lpa || '',
+    cgpa: backendDrive.minimumCgpa?.toString() || backendDrive.cgpa || '',
+    lastDate: backendDrive.lastDate || '',
+    description: backendDrive.description || '',
+    initial: companyName.charAt(0).toUpperCase(),
+    color: getColorForCompany(companyName),
+  };
+}
+
+// Helper function to generate consistent colors for companies
+function getColorForCompany(company: string): string {
+  const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+  let hash = 0;
+  for (let i = 0; i < company.length; i++) {
+    hash = ((hash << 5) - hash) + company.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
+// Helper function to map application status from backend to frontend format
+function mapApplicationStatus(status: string): 'Applied' | 'In Review' | 'Shortlisted' | 'Selected' | 'Rejected' {
+  const statusMap: Record<string, 'Applied' | 'In Review' | 'Shortlisted' | 'Selected' | 'Rejected'> = {
+    'APPLIED': 'Applied',
+    'IN_REVIEW': 'In Review',
+    'SHORTLISTED': 'Shortlisted',
+    'SELECTED': 'Selected',
+    'REJECTED': 'Rejected',
+  };
+  return statusMap[status.toUpperCase()] || 'Applied';
+}
+
 // Type definitions for response data
 export interface StatsData {
   label: string;
@@ -24,6 +64,7 @@ export interface DriveData {
 
 export interface ApplicationData {
   id: string | number;
+  driveId: string | number;
   company: string;
   role: string;
   appliedOn: string;
@@ -48,10 +89,10 @@ export interface StudentProfile {
   skills: string[];
 }
 
-// Fetch student dashboard data (stats, profile, etc.)
-export async function fetchDashboard(regdno: string) {
+// Fetch student profile
+export async function fetchProfile(regdno: string = '0601289127'): Promise<StudentProfile | null> {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/dashboard/${regdno}`, {
+    const response = await fetch(`${BACKEND_URL}/api/profile`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -60,11 +101,42 @@ export async function fetchDashboard(regdno: string) {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch dashboard: ${response.statusText}`);
+      throw new Error(`Failed to fetch profile: ${response.statusText}`);
     }
 
     const data = await response.json();
-    return data;
+    const studentData = data.data || data || null;
+    return studentData ? mapStudentToProfile(studentData) : null;
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    return null;
+  }
+}
+
+// Helper function to map backend student data to frontend profile format
+function mapStudentToProfile(student: any): StudentProfile {
+  return {
+    name: student.name || '',
+    email: student.email || '',
+    phone: student.phno || '',
+    location: student.collegeName || 'Not Provided',
+    profileInitial: (student.name || '').charAt(0).toUpperCase(),
+    degree: student.course || '',
+    cgpa: student.cgpa || 'N/A',
+    batch: student.admissionYear || student.batchId || '',
+    rollNumber: student.regdno || '',
+    department: student.branchCode || '',
+    score10th: student.score10th || 'N/A',
+    score12th: student.score12th || 'N/A',
+    skills: student.skills || [],
+  };
+}
+
+// Fetch student dashboard data (stats, profile, etc.)
+export async function fetchDashboard() {
+  try {
+    console.warn('fetchDashboard is deprecated and no longer supported');
+    return null;
   } catch (error) {
     console.error('Error fetching dashboard:', error);
     return null;
@@ -87,7 +159,8 @@ export async function fetchDrives(): Promise<DriveData[]> {
     }
 
     const data = await response.json();
-    return data;
+    const drives = data.data || data || [];
+    return Array.isArray(drives) ? drives.map(mapDriveData) : [];
   } catch (error) {
     console.error('Error fetching drives:', error);
     return [];
@@ -110,7 +183,8 @@ export async function fetchDriveById(driveId: string): Promise<DriveData | null>
     }
 
     const data = await response.json();
-    return data;
+    const drive = data.data || data || null;
+    return drive ? mapDriveData(drive) : null;
   } catch (error) {
     console.error('Error fetching drive:', error);
     return null;
@@ -133,7 +207,8 @@ export async function fetchEligibleDrives(studentId: string): Promise<DriveData[
     }
 
     const data = await response.json();
-    return data;
+    const drives = data.data || data || [];
+    return Array.isArray(drives) ? drives.map(mapDriveData) : [];
   } catch (error) {
     console.error('Error fetching eligible drives:', error);
     return [];
@@ -156,7 +231,8 @@ export async function fetchDrivesByType(type: string): Promise<DriveData[]> {
     }
 
     const data = await response.json();
-    return data;
+    const drives = data.data || data || [];
+    return Array.isArray(drives) ? drives.map(mapDriveData) : [];
   } catch (error) {
     console.error('Error fetching drives by type:', error);
     return [];
@@ -179,7 +255,8 @@ export async function fetchOpenDrives(): Promise<DriveData[]> {
     }
 
     const data = await response.json();
-    return data;
+    const drives = data.data || data || [];
+    return Array.isArray(drives) ? drives.map(mapDriveData) : [];
   } catch (error) {
     console.error('Error fetching open drives:', error);
     return [];
@@ -202,7 +279,42 @@ export async function fetchApplications(studentId: string): Promise<ApplicationD
     }
 
     const data = await response.json();
-    return data;
+    const applications = data.data || data || [];
+    
+    // Fetch all drives to map LPA values
+    const drives = await fetchOpenDrives();
+    const driveMap = new Map(drives.map(d => [d.id.toString(), d.lpa]));
+    
+    return Array.isArray(applications) ? applications.map((app: any) => {
+      // Extract LPA from various possible sources
+      let lpa = '';
+      if (app.lpa && app.lpa !== '') {
+        lpa = app.lpa;
+      } else if (app.drive?.lpaPackage) {
+        lpa = app.drive.lpaPackage.toString();
+      } else if (app.drivePackage) {
+        lpa = app.drivePackage.toString();
+      } else {
+        // Try to get LPA from the drives map using driveId
+        const driveId = app.driveId || app.drive?.id;
+        if (driveId) {
+          lpa = driveMap.get(driveId.toString()) || 'N/A';
+        } else {
+          lpa = 'N/A';
+        }
+      }
+      
+      return {
+        id: app.id || '',
+        driveId: app.driveId || app.drive?.id || '',
+        company: app.companyName || app.company || '',
+        role: app.role || '',
+        appliedOn: app.appliedDate || app.appliedOn || '',
+        status: mapApplicationStatus(app.status || 'APPLIED'),
+        round: app.round || '',
+        lpa: lpa,
+      };
+    }) : [];
   } catch (error) {
     console.error('Error fetching applications:', error);
     return [];
@@ -225,7 +337,42 @@ export async function fetchApplicationsByStatus(studentId: string, status: strin
     }
 
     const data = await response.json();
-    return data;
+    const applications = data.data || data || [];
+    
+    // Fetch all drives to map LPA values
+    const drives = await fetchOpenDrives();
+    const driveMap = new Map(drives.map(d => [d.id.toString(), d.lpa]));
+    
+    return Array.isArray(applications) ? applications.map((app: any) => {
+      // Extract LPA from various possible sources
+      let lpa = '';
+      if (app.lpa && app.lpa !== '') {
+        lpa = app.lpa;
+      } else if (app.drive?.lpaPackage) {
+        lpa = app.drive.lpaPackage.toString();
+      } else if (app.drivePackage) {
+        lpa = app.drivePackage.toString();
+      } else {
+        // Try to get LPA from the drives map using driveId
+        const driveId = app.driveId || app.drive?.id;
+        if (driveId) {
+          lpa = driveMap.get(driveId.toString()) || 'N/A';
+        } else {
+          lpa = 'N/A';
+        }
+      }
+      
+      return {
+        id: app.id || '',
+        driveId: app.driveId || app.drive?.id || '',
+        company: app.companyName || app.company || '',
+        role: app.role || '',
+        appliedOn: app.appliedDate || app.appliedOn || '',
+        status: mapApplicationStatus(app.status || status),
+        round: app.round || '',
+        lpa: lpa,
+      };
+    }) : [];
   } catch (error) {
     console.error('Error fetching applications by status:', error);
     return [];

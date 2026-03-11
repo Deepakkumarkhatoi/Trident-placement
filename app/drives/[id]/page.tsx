@@ -479,7 +479,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
-import { fetchDriveById, applyToDrive } from '@/lib/backend';
+import { fetchDriveById, applyToDrive, fetchApplications } from '@/lib/backend';
 import {
   ArrowLeft,
   Building2,
@@ -555,6 +555,12 @@ export default function DriveDetailPage() {
           return;
         }
         setDrive(driveData);
+
+        // Check if student already applied to this drive
+        const studentId = '0601289127';
+        const applications = await fetchApplications(studentId);
+        const hasApplied = applications.some(app => app.driveId?.toString() === id);
+        setApplied(hasApplied);
       } catch {
         setError(true);
       } finally {
@@ -566,15 +572,17 @@ export default function DriveDetailPage() {
   }, [id]);
 
   const handleApply = async () => {
-    const studentId = localStorage.getItem('regdno');
-    if (!studentId) return;
-
     try {
       setApplying(true);
-      const res = await applyToDrive(studentId, id);
-      if (res) {
+      const studentId = '0601289127';
+      const response = await applyToDrive(studentId, id);
+      if (response) {
         setApplied(true);
+        alert('Successfully applied to this drive!');
       }
+    } catch (error) {
+      console.error('Error applying to drive:', error);
+      alert('Failed to apply to this drive. Please try again.');
     } finally {
       setApplying(false);
     }
@@ -698,13 +706,19 @@ export default function DriveDetailPage() {
 
             <hr className="border-border" />
 
-            <button
-              onClick={handleApply}
-              disabled={applying || applied}
-              className="flex w-full items-center justify-center gap-2 bg-cyan-400 hover:bg-cyan-300 text-black font-semibold rounded-lg py-3 transition-colors disabled:opacity-60"
-            >
-              {applied ? 'Applied' : applying ? 'Applying...' : 'Apply Now'}
-            </button>
+            {!applied ? (
+              <button
+                onClick={handleApply}
+                disabled={applying}
+                className="flex w-full items-center justify-center gap-2 bg-cyan-400 hover:bg-cyan-300 text-black font-semibold rounded-lg py-3 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {applying ? 'Applying...' : 'Apply Now'}
+              </button>
+            ) : (
+              <div className="flex w-full items-center justify-center gap-2 bg-green-500/20 text-green-600 font-semibold rounded-lg py-3">
+                ✓ Already Applied
+              </div>
+            )}
 
           </div>
 

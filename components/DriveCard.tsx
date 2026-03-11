@@ -13,9 +13,10 @@ interface DriveCardProps {
   initial: string;
   color: string;
   delay?: number;
+  applied?: boolean;
 }
 
-const DriveCard = ({ id, company, role, type, lpa, cgpa, lastDate, description, initial, color, delay = 0 }: DriveCardProps) => {
+const DriveCard = ({ id, company, role, type, lpa, cgpa, lastDate, description, initial, color, delay = 0, applied = false }: DriveCardProps) => {
   return (
     <div
       className="bg-card border border-border rounded-xl p-4 md:p-5 flex flex-col justify-between hover:border-primary/30 transition-all duration-300 opacity-0 animate-fade-in min-w-0"
@@ -68,9 +69,15 @@ const DriveCard = ({ id, company, role, type, lpa, cgpa, lastDate, description, 
         <Button variant="outline" size="sm" className="flex-1 text-xs" asChild>
           <Link href={`/drives/${id}`}>View Details</Link>
         </Button>
-        <Button size="sm" className="flex-1 text-xs">
-          Apply Now →
-        </Button>
+        {!applied ? (
+          <Button size="sm" className="flex-1 text-xs">
+            Apply Now →
+          </Button>
+        ) : (
+          <Button size="sm" className="flex-1 text-xs bg-green-500/20 text-green-600 hover:bg-green-500/30 cursor-not-allowed" disabled>
+            ✓ Applied
+          </Button>
+        )}
       </div>
     </div>
   );
