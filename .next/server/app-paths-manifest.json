@@ -1,6 +1,0 @@
-{
-  "/drives/page": "app/drives/page.js",
-  "/notifications/page": "app/notifications/page.js",
-  "/drives/[id]/page": "app/drives/[id]/page.js",
-  "/page": "app/page.js"
-}
