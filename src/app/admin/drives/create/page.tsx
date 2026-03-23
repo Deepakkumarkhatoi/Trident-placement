@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BACKEND_URL, API_ENDPOINTS } from '@/src/lib/backend';
+import { adminDrivesApi } from '@/src/lib/api/admin.drives';
 
 export default function CreateDrivePage() {
   const router = useRouter();
@@ -17,11 +17,11 @@ export default function CreateDrivePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
-    company: '',
+    companyName: '',
     role: '',
-    type: 'ON_CAMPUS',
-    lpa: '',
-    cgpa: '',
+    driveType: 'ON_CAMPUS',
+    lpaPackage: '',
+    minimumCgpa: '',
     lastDate: '',
     description: '',
   });
@@ -30,64 +30,35 @@ export default function CreateDrivePage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { name: string; value: string } }
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
     setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
 
-    // Validation
-    if (!formData.company.trim() || !formData.role.trim() || !formData.lpa.trim() || !formData.cgpa.trim() || !formData.lastDate.trim()) {
+    if (!formData.companyName.trim() || !formData.role.trim() ||
+        !formData.lpaPackage || !formData.minimumCgpa || !formData.lastDate) {
       setError('Please fill in all required fields');
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
     try {
-      console.log('[v0] Sending drive creation request:', formData);
-      
-      const response = await fetch(`${BACKEND_URL}${API_ENDPOINTS.ADMIN_DRIVES}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('accessToken') || ''}`,
-        },
-        body: JSON.stringify({
-          companyName: formData.company,
-          position: formData.role,
-          driveType: formData.type,
-          packageLPA: parseFloat(formData.lpa),
-          minCGPA: parseFloat(formData.cgpa),
-          applicationDeadline: formData.lastDate,
-          description: formData.description || '',
-        }),
+      await adminDrivesApi.create({
+        companyName:  formData.companyName.trim(),
+        role:         formData.role.trim(),
+        driveType:    formData.driveType,
+        lpaPackage:   parseFloat(formData.lpaPackage),
+        minimumCgpa:  parseFloat(formData.minimumCgpa),
+        lastDate:     formData.lastDate,
+        description:  formData.description.trim() || undefined,
       });
-
-      console.log('[v0] Response status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.log('[v0] Error response:', errorData);
-        throw new Error(errorData.message || `Failed to create drive (${response.status})`);
-      }
-
-      const data = await response.json();
-      console.log('[v0] Drive created successfully:', data);
       setSuccess(true);
-      
-      setTimeout(() => {
-        router.push('/admin/drives');
-      }, 1500);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'An error occurred while creating the drive';
-      console.error('[v0] Error creating drive:', message);
-      setError(message);
+      setTimeout(() => router.push('/admin/drives'), 1500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create drive');
     } finally {
       setLoading(false);
     }
@@ -96,16 +67,11 @@ export default function CreateDrivePage() {
   return (
     <div className="space-y-6">
       <Link href="/admin/drives">
-        <Button variant="outline" className="gap-2 mb-4">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Drives
-        </Button>
+        <Button variant="outline" className="gap-2 mb-4"><ArrowLeft className="w-4 h-4" />Back to Drives</Button>
       </Link>
 
       <Card className="max-w-2xl">
-        <CardHeader>
-          <CardTitle>Create New Drive</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Create New Drive</CardTitle></CardHeader>
         <CardContent>
           {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
@@ -116,51 +82,31 @@ export default function CreateDrivePage() {
               </div>
             </div>
           )}
-
           {success && (
             <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-green-900">Success</p>
-                <p className="text-sm text-green-800 mt-1">Drive created successfully! Redirecting...</p>
-              </div>
+              <p className="text-sm text-green-800">Drive created successfully! Redirecting...</p>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">Company Name <span className="text-red-500">*</span></label>
-              <Input
-                name="company"
-                value={formData.company}
-                onChange={handleChange}
-                placeholder="Enter company name"
-                disabled={loading || success}
-              />
+              <Input name="companyName" value={formData.companyName} onChange={handleChange}
+                placeholder="Enter company name" disabled={loading || success} />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Position/Role <span className="text-red-500">*</span></label>
-              <Input
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                placeholder="e.g., Software Engineer"
-                disabled={loading || success}
-              />
+              <label className="block text-sm font-medium text-foreground mb-2">Role <span className="text-red-500">*</span></label>
+              <Input name="role" value={formData.role} onChange={handleChange}
+                placeholder="e.g. Software Engineer" disabled={loading || success} />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Drive Type <span className="text-red-500">*</span></label>
-                <Select 
-                  value={formData.type} 
-                  onValueChange={(value) => handleChange({ target: { name: 'type', value } })}
-                  disabled={loading || success}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                <Select value={formData.driveType}
+                  onValueChange={v => handleChange({ target: { name: 'driveType', value: v } })}
+                  disabled={loading || success}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ON_CAMPUS">On Campus</SelectItem>
                     <SelectItem value="OFF_CAMPUS">Off Campus</SelectItem>
@@ -168,76 +114,35 @@ export default function CreateDrivePage() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Package (LPA) <span className="text-red-500">*</span></label>
-                <Input
-                  name="lpa"
-                  type="number"
-                  step="0.1"
-                  value={formData.lpa}
-                  onChange={handleChange}
-                  placeholder="e.g., 12.5"
-                  disabled={loading || success}
-                />
+                <Input name="lpaPackage" type="number" step="0.1" value={formData.lpaPackage}
+                  onChange={handleChange} placeholder="e.g. 12.5" disabled={loading || success} />
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Minimum CGPA <span className="text-red-500">*</span></label>
-                <Input
-                  name="cgpa"
-                  type="number"
-                  step="0.1"
-                  value={formData.cgpa}
-                  onChange={handleChange}
-                  placeholder="e.g., 7.0"
-                  disabled={loading || success}
-                />
+                <Input name="minimumCgpa" type="number" step="0.1" value={formData.minimumCgpa}
+                  onChange={handleChange} placeholder="e.g. 7.0" disabled={loading || success} />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Application Deadline <span className="text-red-500">*</span></label>
-                <Input
-                  name="lastDate"
-                  type="date"
-                  value={formData.lastDate}
-                  onChange={handleChange}
-                  disabled={loading || success}
-                />
+                <label className="block text-sm font-medium text-foreground mb-2">Last Date <span className="text-red-500">*</span></label>
+                <Input name="lastDate" type="date" value={formData.lastDate}
+                  onChange={handleChange} disabled={loading || success} />
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">Description</label>
-              <Textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Enter job description, requirements, etc."
-                rows={6}
-                disabled={loading || success}
-              />
+              <Textarea name="description" value={formData.description} onChange={handleChange}
+                placeholder="Enter job description, requirements, etc." rows={6} disabled={loading || success} />
             </div>
-
             <div className="flex gap-4 pt-4">
-              <Button 
-                type="submit" 
-                disabled={loading || success} 
-                className="flex-1"
-              >
-                {loading ? 'Creating...' : success ? 'Created Successfully!' : 'Create Drive'}
+              <Button type="submit" disabled={loading || success} className="flex-1">
+                {loading ? 'Creating...' : success ? 'Created!' : 'Create Drive'}
               </Button>
               <Link href="/admin/drives" className="flex-1">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full"
-                  disabled={loading || success}
-                >
-                  Cancel
-                </Button>
+                <Button type="button" variant="outline" className="w-full" disabled={loading || success}>Cancel</Button>
               </Link>
             </div>
           </form>

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Bell, Moon, Sun, Menu } from 'lucide-react';
+import { Search, Bell, Moon, Sun, Menu, LogOut } from 'lucide-react';
+import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import { useRouter } from 'next/navigation';
 
@@ -65,6 +66,15 @@ const TopBar = ({ onMenuToggle }: TopBarProps) => {
         >
           <Bell className="w-[18px] h-[18px]" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive" />
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={() => signOut({ callbackUrl: '/' })}
+          className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          title="Logout"
+        >
+          <LogOut className="w-[18px] h-[18px]" />
         </button>
 
       </div>

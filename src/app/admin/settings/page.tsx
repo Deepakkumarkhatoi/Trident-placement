@@ -4,9 +4,8 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
-import { Textarea } from '@/src/components/ui/textarea';
 import { Switch } from '@/src/components/ui/switch';
-import { AlertCircle, Save } from 'lucide-react';
+import { CheckCircle2, Save } from 'lucide-react'; // ← was AlertCircle
 import { Alert, AlertDescription } from '@/src/components/ui/alert';
 
 export default function SettingsPage() {
@@ -20,33 +19,21 @@ export default function SettingsPage() {
     maxApplicationsPerStudent: 10,
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { name: string; value: string | boolean } }
-  ) => {
-    const { name, value, type } = e.target as any;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? !prev[name as keyof typeof formData] : value,
-    }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSwitchChange = (name: string, checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: checked,
-    }));
+    setFormData(prev => ({ ...prev, [name]: checked }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      // Save settings to backend
-      console.log('Settings saved:', formData);
-      setSettingsSaved(true);
-      setTimeout(() => setSettingsSaved(false), 3000);
-    } catch (error) {
-      console.error('Error saving settings:', error);
-    }
+    // Note: no backend endpoint exists for settings yet — frontend only
+    console.log('Settings (frontend only):', formData);
+    setSettingsSaved(true);
+    setTimeout(() => setSettingsSaved(false), 3000);
   };
 
   return (
@@ -58,109 +45,65 @@ export default function SettingsPage() {
 
       {settingsSaved && (
         <Alert className="bg-green-50 border-green-200">
-          <AlertCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">Settings saved successfully!</AlertDescription>
+          <CheckCircle2 className="h-4 w-4 text-green-600" /> {/* ← fixed icon */}
+          <AlertDescription className="text-green-800">Settings saved (frontend only — no backend endpoint yet).</AlertDescription>
         </Alert>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* General Settings */}
         <Card>
-          <CardHeader>
-            <CardTitle>General Settings</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>General Settings</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">System Name</label>
-              <Input
-                name="systemName"
-                value={formData.systemName}
-                onChange={handleChange}
-                placeholder="Enter system name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Admin Email</label>
-              <Input
-                name="adminEmail"
-                type="email"
-                value={formData.adminEmail}
-                onChange={handleChange}
-                placeholder="admin@example.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Support Email</label>
-              <Input
-                name="supportEmail"
-                type="email"
-                value={formData.supportEmail}
-                onChange={handleChange}
-                placeholder="support@example.com"
-              />
-            </div>
+            {[
+              { label: 'System Name',    name: 'systemName',    type: 'text',  placeholder: 'Enter system name' },
+              { label: 'Admin Email',    name: 'adminEmail',    type: 'email', placeholder: 'admin@example.com' },
+              { label: 'Support Email',  name: 'supportEmail',  type: 'email', placeholder: 'support@example.com' },
+            ].map(f => (
+              <div key={f.name}>
+                <label className="block text-sm font-medium text-foreground mb-2">{f.label}</label>
+                <Input name={f.name} type={f.type}
+                  value={formData[f.name as keyof typeof formData] as string}
+                  onChange={handleChange} placeholder={f.placeholder} />
+              </div>
+            ))}
           </CardContent>
         </Card>
 
-        {/* Application Settings */}
         <Card>
-          <CardHeader>
-            <CardTitle>Application Settings</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Application Settings</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Max Applications Per Student
-              </label>
-              <Input
-                name="maxApplicationsPerStudent"
-                type="number"
-                value={formData.maxApplicationsPerStudent}
-                onChange={handleChange}
-                min="1"
-              />
+              <label className="block text-sm font-medium text-foreground mb-2">Max Applications Per Student</label>
+              <Input name="maxApplicationsPerStudent" type="number"
+                value={formData.maxApplicationsPerStudent} onChange={handleChange} min="1" />
             </div>
             <div className="flex items-center justify-between pt-2">
               <div>
                 <label className="text-sm font-medium text-foreground">Enable Auto Approval</label>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Automatically approve applications meeting criteria
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Automatically approve applications meeting criteria</p>
               </div>
-              <Switch
-                checked={formData.autoApprovalEnabled}
-                onCheckedChange={(checked) => handleSwitchChange('autoApprovalEnabled', checked)}
-              />
+              <Switch checked={formData.autoApprovalEnabled}
+                onCheckedChange={c => handleSwitchChange('autoApprovalEnabled', c)} />
             </div>
           </CardContent>
         </Card>
 
-        {/* Notification Settings */}
         <Card>
-          <CardHeader>
-            <CardTitle>Notification Settings</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          <CardHeader><CardTitle>Notification Settings</CardTitle></CardHeader>
+          <CardContent>
             <div className="flex items-center justify-between">
               <div>
                 <label className="text-sm font-medium text-foreground">Enable Notifications</label>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Send email notifications for important events
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Send email notifications for important events</p>
               </div>
-              <Switch
-                checked={formData.notificationsEnabled}
-                onCheckedChange={(checked) => handleSwitchChange('notificationsEnabled', checked)}
-              />
+              <Switch checked={formData.notificationsEnabled}
+                onCheckedChange={c => handleSwitchChange('notificationsEnabled', c)} />
             </div>
           </CardContent>
         </Card>
 
-        {/* System Info */}
         <Card>
-          <CardHeader>
-            <CardTitle>System Information</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>System Information</CardTitle></CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">System Version</span>
@@ -173,10 +116,8 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Save Button */}
         <Button type="submit" size="lg" className="w-full gap-2">
-          <Save className="w-4 h-4" />
-          Save Settings
+          <Save className="w-4 h-4" />Save Settings
         </Button>
       </form>
     </div>
