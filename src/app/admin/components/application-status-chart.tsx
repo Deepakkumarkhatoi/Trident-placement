@@ -15,7 +15,7 @@ export default function ApplicationStatusChart({ stats, loading }: Props) {
     { name: 'Applied',     value: (stats?.totalApplications ?? 0) - (stats?.shortlistedStudents ?? 0) - (stats?.placedStudents ?? 0) },
     { name: 'Shortlisted', value: stats?.shortlistedStudents ?? 0 },
     { name: 'Approved',    value: stats?.placedStudents ?? 0 },
-    { name: 'Rejected',    value: 0 }, // backend stats don't expose rejected count separately
+    { name: 'Rejected',    value: 0 }, 
   ].filter(d => d.value > 0);
 
   if (loading) return <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">Loading...</div>;

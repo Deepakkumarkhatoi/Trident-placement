@@ -177,4 +177,13 @@
       transform: translateY(0);
     }
   }
+
+  /* Hide scrollbars but keep scrolling enabled (used by the admin sidebar). */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
 }

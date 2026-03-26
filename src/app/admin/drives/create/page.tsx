@@ -110,7 +110,7 @@ export default function CreateDrivePage() {
                   <SelectContent>
                     <SelectItem value="ON_CAMPUS">On Campus</SelectItem>
                     <SelectItem value="OFF_CAMPUS">Off Campus</SelectItem>
-                    <SelectItem value="POOL">Pool</SelectItem>
+                    <SelectItem value="POOL">Virtual</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

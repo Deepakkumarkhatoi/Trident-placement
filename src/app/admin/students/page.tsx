@@ -1,190 +1,287 @@
- 'use client';
+'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { Card, CardContent, CardHeader } from '@/src/components/ui/card';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { Eye, Search } from 'lucide-react';
+
+import { adminStudentsApi, type StudentSummaryDTO } from '@/src/lib/api/admin.students';
+import { Card, CardContent } from '@/src/components/ui/card';
 import { Input } from '@/src/components/ui/input';
 import { Button } from '@/src/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/src/components/ui/table';
-import { Skeleton } from '@/src/components/ui/skeleton';
-import { Search, Eye } from 'lucide-react';
-import Link from 'next/link';
-import { adminStudentsApi, type StudentSummaryDTO } from '@/src/lib/api/admin.students';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/components/ui/select';
+
+type StatusFilter = 'ALL' | 'PLACED' | 'APPLYING' | 'NOT_APPLIED';
+
+const pageSize = 20;
+
+function statusPill(s: StudentSummaryDTO) {
+  const isPlaced = s.placedCount > 0;
+  const isApplying = !isPlaced && s.totalApplications > 0;
+  if (isPlaced) {
+    return <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">PLACED</span>;
+  }
+  if (isApplying) {
+    return <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-700 border border-blue-500/20">ACTIVE</span>;
+  }
+  return <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">NOT APPLIED</span>;
+}
 
 export default function StudentsPage() {
-  const [students, setStudents] = useState<StudentSummaryDTO[]>([]);
+  const [allStudents, setAllStudents] = useState<StudentSummaryDTO[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchInput, setSearchInput] = useState('');
-  const [admissionYear, setAdmissionYear] = useState<number | undefined>(undefined);
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-  const size = 20;
-  const searchDebounce = useRef<number | null>(null);
 
-  // clear pending debounce on unmount
-  useEffect(() => {
-    return () => {
-      if (searchDebounce.current) window.clearTimeout(searchDebounce.current);
-    };
-  }, []);
+  const [page, setPage] = useState(0); 
+
+  const [q, setQ] = useState('');
+  const [branch, setBranch] = useState('ALL');
+  const [status, setStatus] = useState<StatusFilter>('ALL');
+
+  function normalizeStudents(input: unknown): StudentSummaryDTO[] {
+    if (Array.isArray(input)) return input as StudentSummaryDTO[];
+    const maybe = input as any;
+    if (Array.isArray(maybe?.content)) return maybe.content as StudentSummaryDTO[];
+    if (Array.isArray(maybe?.data)) return maybe.data as StudentSummaryDTO[];
+    if (Array.isArray(maybe?.students)) return maybe.students as StudentSummaryDTO[];
+    return [];
+  }
 
   useEffect(() => {
-    // fetch data when page, searchTerm or admissionYear changes
     setLoading(true);
     adminStudentsApi
-      .list({ page, size, q: searchTerm || undefined, admissionYear })
-      .then(res => {
-        setStudents(res.content);
-        setTotalPages(res.totalPages);
-        setTotalElements(res.totalElements);
+      .getAll()
+      .then((res: StudentSummaryDTO[]) => {
+        setAllStudents(normalizeStudents(res));
       })
-      .catch(console.error)
+      .catch(() => {
+        setAllStudents([]);
+      })
       .finally(() => setLoading(false));
-  }, [page, searchTerm, admissionYear]);
+  }, []);
+
+  const filtered = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    const base = allStudents;
+    return base.filter((s) => {
+      const matchText =
+        !query ||
+        s.name.toLowerCase().includes(query) ||
+        s.regdno.toLowerCase().includes(query) ||
+        s.email.toLowerCase().includes(query) ||
+        (s.branch || '').toLowerCase().includes(query);
+      const matchBranch = branch === 'ALL' ? true : (s.branch || '—') === branch;
+      const isPlaced = s.placedCount > 0;
+      const isApplying = !isPlaced && s.totalApplications > 0;
+      const isNot = !isPlaced && s.totalApplications === 0;
+      const matchStatus =
+        status === 'ALL'
+          ? true
+          : status === 'PLACED'
+            ? isPlaced
+            : status === 'APPLYING'
+              ? isApplying
+              : status === 'NOT_APPLIED'
+                ? isNot
+                : true;
+      return matchText && matchBranch && matchStatus;
+    });
+  }, [allStudents, q, branch, status]);
+
+  const branches = useMemo(() => {
+    const set = new Set<string>();
+    allStudents.forEach((s) => set.add(s.branch || '—'));
+    return Array.from(set).filter(Boolean).sort();
+  }, [allStudents]);
+
+  const cardCounts = useMemo(() => {
+    const placed = filtered.filter((s) => s.placedCount > 0).length;
+    const applying = filtered.filter((s) => s.placedCount === 0 && s.totalApplications > 0).length;
+    const notApplied = filtered.filter((s) => s.placedCount === 0 && s.totalApplications === 0).length;
+    return { total: filtered.length, placed, applying, notApplied };
+  }, [filtered]);
+
+  const totalPages = useMemo(() => Math.ceil(filtered.length / pageSize), [filtered.length]);
+
+  const paginatedStudents = useMemo(() => {
+    const start = page * pageSize;
+    const end = start + pageSize;
+    return filtered.slice(start, end);
+  }, [filtered, page]);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Students</h1>
-        <p className="text-muted-foreground mt-2">Manage and view student records</p>
+        <h1 className="text-3xl font-bold text-foreground">Student Management</h1>
+        <p className="text-muted-foreground mt-2 text-sm">Manage records, CGPA, status — {cardCounts.total} total students</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl border border-black/5 p-5">
+          <div className="text-sm text-muted-foreground font-medium">TOTAL</div>
+          <div className="text-3xl font-bold text-foreground">{cardCounts.total}</div>
+        </div>
+        <div className="bg-white rounded-2xl border border-black/5 p-5">
+          <div className="text-sm text-muted-foreground font-medium">PLACED</div>
+          <div className="text-3xl font-bold text-foreground">{cardCounts.placed}</div>
+        </div>
+        <div className="bg-white rounded-2xl border border-black/5 p-5">
+          <div className="text-sm text-muted-foreground font-medium">APPLYING</div>
+          <div className="text-3xl font-bold text-foreground">{cardCounts.applying}</div>
+        </div>
+        <div className="bg-white rounded-2xl border border-black/5 p-5">
+          <div className="text-sm text-muted-foreground font-medium">NOT APPLIED</div>
+          <div className="text-3xl font-bold text-foreground">{cardCounts.notApplied}</div>
+        </div>
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2 w-full">
-            <Search className="w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, reg no, or email..."
-              value={searchInput}
-              onChange={e => {
-                const v = e.target.value;
-                setSearchInput(v);
-                // debounce updating searchTerm to avoid rapid requests
-                if (searchDebounce.current) window.clearTimeout(searchDebounce.current);
-                searchDebounce.current = window.setTimeout(() => {
+        <CardContent className="p-5">
+          <div className="flex flex-col lg:flex-row gap-4 items-stretch">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                value={q}
+                onChange={(e) => {
                   setPage(0);
-                  setSearchTerm(v);
-                }, 300);
-              }}
-              className="flex-1"
-            />
-            <select
-              className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={admissionYear ?? ''}
-              onChange={e => { setPage(0); setAdmissionYear(e.target.value ? Number(e.target.value) : undefined); }}
-            >
-              <option value="">All years</option>
-              {Array.from({ length: 2030 - 1990 + 1 }, (_, i) => 1990 + i).map(y => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
+                  setQ(e.target.value);
+                }}
+                placeholder="Search by name, roll no..."
+                className="pl-10 bg-background"
+              />
+            </div>
+
+            <Select value={branch} onValueChange={(v) => {
+              setPage(0);
+              setBranch(v);
+            }}>
+              <SelectTrigger className="w-full lg:w-56">
+                <SelectValue placeholder="All Branches" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Branches</SelectItem>
+                {branches.map((b) => (
+                  <SelectItem key={b} value={b}>
+                    {b}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={status} onValueChange={(v) => {
+              setPage(0);
+              setStatus(v as StatusFilter);
+            }}>
+              <SelectTrigger className="w-full lg:w-56">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Status</SelectItem>
+                <SelectItem value="PLACED">PLACED</SelectItem>
+                <SelectItem value="APPLYING">APPLYING</SelectItem>
+                <SelectItem value="NOT_APPLIED">NOT APPLIED</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select disabled>
+              <SelectTrigger className="w-full lg:w-56">
+                <SelectValue placeholder="Any CGPA" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Any CGPA</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-2">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
-          ) : students.length > 0 ? (
-            <>
+
+          <div className="mt-5">
+            {loading ? (
+              <div className="text-muted-foreground text-sm py-10 text-center">Loading...</div>
+            ) : filtered.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Reg No.</TableHead>
+                    <TableHead>Student</TableHead>
+                    <TableHead>Roll No.</TableHead>
                     <TableHead>Branch</TableHead>
-                    <TableHead>Course</TableHead>
-                    <TableHead>Applications</TableHead>
-                    <TableHead>Placed</TableHead>
+                    <TableHead>CGPA</TableHead>
+                    <TableHead>Applied</TableHead>
+                    <TableHead>Offers</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {students.map(student => (
-                    <TableRow key={student.regdno}>
-                      <TableCell className="font-medium">{student.name}</TableCell>
-                      <TableCell>{student.email}</TableCell>
-                      <TableCell>{student.regdno}</TableCell>
-                      <TableCell>{student.branch}</TableCell>
-                      <TableCell>{student.course}</TableCell>
+                  {paginatedStudents.map((s) => (
+                    <TableRow key={s.regdno}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">
+                            {String(s.name || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-semibold truncate">{s.name}</div>
+                            <div className="text-sm text-muted-foreground truncate">{s.email || ''}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{s.regdno}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{s.branch || ''}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground"></TableCell>
                       <TableCell>
-                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm">
-                          {student.totalApplications}
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-700 border border-blue-500/20">
+                          {s.totalApplications}
                         </span>
                       </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{s.placedCount}</TableCell>
+                      <TableCell>{statusPill(s)}</TableCell>
                       <TableCell>
-                        <span className={`px-2 py-1 rounded text-sm ${student.placedCount > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                          {student.placedCount}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Link href={`/admin/students/${student.regdno}`}>
-                          <Button variant="ghost" size="sm" className="gap-2">
-                            <Eye className="w-4 h-4" />View
-                          </Button>
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          <Link href={`/admin/students/${s.regdno}`}>
+                            <Button variant="ghost" size="sm" className="p-2">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </Link>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
+            ) : (
+              <div className="text-center py-10 text-muted-foreground text-sm">No students found</div>
+            )}
+          </div>
 
-              <div className="flex items-center justify-between mt-6">
-                <div className="text-sm text-muted-foreground">Showing {(page * size) + 1} - {Math.min((page + 1) * size, totalElements)} of {totalElements}</div>
-                <div className="flex items-center gap-1">
-                  <Button size="sm" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page <= 0} variant="outline">Previous</Button>
-                  
-                  {/* Pagination Numbers */}
-                  <div className="flex items-center gap-1 mx-2">
-                    {/* First page */}
-                    {totalPages > 0 && (
-                      <button
-                        onClick={() => setPage(0)}
-                        className={`px-3 py-1 rounded text-sm ${page === 0 ? 'bg-primary text-primary-foreground font-semibold' : 'border border-border hover:bg-accent'}`}
-                      >
-                        1
-                      </button>
-                    )}
-                    
-                    {/* Ellipsis if gap before current range */}
-                    {page > 2 && <span className="px-2 text-muted-foreground">...</span>}
-                    
-                    {/* Page range around current */}
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      const pageNum = Math.max(1, Math.min(page - 2, totalPages - 5)) + i;
-                      if (pageNum === 0 || pageNum === totalPages - 1) return null;
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => setPage(pageNum)}
-                          className={`px-3 py-1 rounded text-sm ${pageNum === page ? 'bg-primary text-primary-foreground font-semibold' : 'border border-border hover:bg-accent'}`}
-                        >
-                          {pageNum + 1}
-                        </button>
-                      );
-                    }).filter(Boolean)}
-                    
-                    {/* Ellipsis if gap after current range */}
-                    {page < totalPages - 3 && <span className="px-2 text-muted-foreground">...</span>}
-                    
-                    {/* Last page */}
-                    {totalPages > 1 && (
-                      <button
-                        onClick={() => setPage(totalPages - 1)}
-                        className={`px-3 py-1 rounded text-sm ${page === totalPages - 1 ? 'bg-primary text-primary-foreground font-semibold' : 'border border-border hover:bg-accent'}`}
-                      >
-                        {totalPages}
-                      </button>
-                    )}
-                  </div>
-                  
-                  <Button size="sm" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} variant="outline">Next</Button>
-                </div>
+          {/* Pagination */}
+          <div className="flex items-center justify-between mt-6">
+            <div className="text-sm text-muted-foreground">
+              Showing {filtered.length === 0 ? 0 : page * pageSize + 1} – {Math.min((page + 1) * pageSize, filtered.length)} of {filtered.length}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" disabled={page <= 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+                Prev
+              </Button>
+              <div className="flex items-center gap-1 mx-2">
+                {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                  const start = Math.max(0, Math.min(page - 1, totalPages - 3));
+                  return start + i;
+                }).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={[
+                      'px-3 py-1 rounded text-sm border transition-colors',
+                      p === page ? 'bg-primary text-primary-foreground font-semibold border-primary' : 'bg-background hover:bg-accent',
+                    ].join(' ')}
+                  >
+                    {p + 1}
+                  </button>
+                ))}
               </div>
-            </>
-          ) : (
-            <div className="text-center py-8"><p className="text-muted-foreground">No students found</p></div>
-          )}
+              <Button size="sm" variant="outline" disabled={page >= Math.max(0, totalPages - 1)} onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}>
+                Next
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
