@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import { ReactNode, useEffect, useMemo } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
@@ -18,6 +18,8 @@ import {
   UserCog,
   Search,
   LayoutGrid,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
@@ -27,11 +29,20 @@ type Props = {
 
 export default function AdminPortalLayout({ children }: Props) {
   const pathname = usePathname();
-  const { setTheme } = useTheme();
+  const { setTheme, theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setTheme('light');
-  }, [setTheme]);
+    setMounted(true);
+    // Set initial theme to light if not already set
+    if (!theme) {
+      setTheme('light');
+    }
+  }, [setTheme, theme]);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   const nav = useMemo(
     () => [
@@ -47,7 +58,6 @@ export default function AdminPortalLayout({ children }: Props) {
             label: 'Activity Log',
             href: '/admin/activity',
             icon: Clock,
-            // numeric badge removed (design-only)
           },
         ],
       },
@@ -58,25 +68,21 @@ export default function AdminPortalLayout({ children }: Props) {
             label: 'Drives',
             href: '/admin/drives',
             icon: Briefcase,
-            // numeric badge removed (design-only)
           },
           {
             label: 'Students',
             href: '/admin/students',
             icon: Users,
-            // numeric badge removed (design-only)
           },
           {
             label: 'Applications',
             href: '/admin/applications',
             icon: ClipboardList,
-            // numeric badge removed (design-only)
           },
           {
             label: 'TPO Users',
             href: '/admin/tpo-users',
             icon: Shield,
-            // numeric badge removed (design-only)
           },
           {
             label: 'Role Manager',
@@ -111,8 +117,8 @@ export default function AdminPortalLayout({ children }: Props) {
   );
 
   return (
-    <div className="min-h-screen bg-[#f5f7fb]">
-      <aside className="fixed left-0 top-0 h-screen w-[270px] bg-[#0f3f2f] text-white z-50">
+    <div className="min-h-screen bg-[#f5f7fb] dark:bg-slate-950">
+      <aside className="fixed left-0 top-0 h-screen w-[270px] bg-[#0f3f2f] dark:bg-slate-900 text-white z-50">
         <div className="px-6 pt-7 pb-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-white/15 flex items-center justify-center font-black text-sm">
@@ -160,7 +166,7 @@ export default function AdminPortalLayout({ children }: Props) {
               SA
             </div>
             <div>
-              <p className="text-xs text-white/60">Super Admin</p>
+              <p className="text-xs text-white/60">Admin</p>
               <p className="text-sm font-bold text-white/90">Administrator</p>
             </div>
           </div>
@@ -168,20 +174,36 @@ export default function AdminPortalLayout({ children }: Props) {
       </aside>
 
       <div className="pl-[270px]">
-        <header className="sticky top-0 z-40 bg-[#f5f7fb] border-b border-black/5">
+        <header className="sticky top-0 z-40 bg-[#f5f7fb] dark:bg-slate-900 border-b border-black/5 dark:border-white/10">
           <div className="px-8 py-4 flex items-center justify-between gap-4">
             <div className="flex-1 flex items-center justify-center">
               <div className="relative w-full max-w-[520px]">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8a93a5]" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8a93a5] dark:text-slate-400" />
                 <input
                   type="text"
                   placeholder="Search students, drives..."
-                  className="w-full bg-white border border-black/5 rounded-xl pl-11 pr-4 py-2.5 text-sm outline-none"
+                  className="w-full bg-white dark:bg-slate-800 border border-black/5 dark:border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-sm text-black dark:text-white placeholder-[#8a93a5] dark:placeholder-slate-400 outline-none"
                 />
               </div>
             </div>
 
             <div className="flex items-center gap-4">
+              <button
+                onClick={toggleTheme}
+                className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-white border border-black/5 hover:bg-gray-50 dark:bg-slate-800 dark:border-white/10 dark:hover:bg-slate-700 transition"
+                title="Toggle theme"
+              >
+                {mounted ? (
+                  theme === 'dark' ? (
+                    <Sun className="w-5 h-5 text-yellow-500" />
+                  ) : (
+                    <Moon className="w-5 h-5 text-slate-600" />
+                  )
+                ) : (
+                  <Moon className="w-5 h-5 text-slate-600" />
+                )}
+              </button>
+
               <div className="inline-flex items-center gap-2 bg-emerald-500/15 text-emerald-700 px-4 py-2 rounded-xl font-semibold">
                 <LayoutGrid className="w-4 h-4" />
                 Admin
@@ -198,7 +220,7 @@ export default function AdminPortalLayout({ children }: Props) {
           </div>
         </header>
 
-        <main className="p-8">{children}</main>
+        <main className="p-8 dark:bg-slate-950 min-h-screen">{children}</main>
       </div>
     </div>
   );

@@ -7,6 +7,14 @@ import { adminStudentsApi, type StudentSummaryDTO } from '@/src/lib/api/admin.st
 
 import Link from 'next/link';
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 16) return 'Good afternoon';
+  if (hour < 20) return 'Good evening';
+  return 'Good night';
+}
+
 function formatShortDate(input: string) {
   const d = new Date(input);
   if (Number.isNaN(d.getTime())) return input;
@@ -33,8 +41,51 @@ export default function AdminDashboard() {
   const [students, setStudents] = useState<StudentSummaryDTO[]>([]);
   const [totalStudentsCount, setTotalStudentsCount] = useState<number>(0);
   const [applicationsCount, setApplicationsCount] = useState<number>(0);
+  const [currentDate, setCurrentDate] = useState<string>('');
+  const [greeting, setGreeting] = useState<string>('Good morning');
 
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Set initial date and greeting
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+    setCurrentDate(dateStr);
+    setGreeting(getGreeting());
+
+    // Update greeting every minute
+    const greetingInterval = setInterval(() => {
+      setGreeting(getGreeting());
+    }, 60000);
+
+    // Update date at midnight
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    const msUntilMidnight = tomorrow.getTime() - now.getTime();
+
+    const dateTimeout = setTimeout(() => {
+      const nextDate = new Date();
+      const dateStr = nextDate.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+      });
+      setCurrentDate(dateStr);
+    }, msUntilMidnight);
+
+    return () => {
+      clearInterval(greetingInterval);
+      clearTimeout(dateTimeout);
+    };
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -106,74 +157,72 @@ export default function AdminDashboard() {
     return rows.slice(0, 6);
   }, [students]);
 
-  const dateLabel = 'Wednesday, 25 March 2026';
-
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-xs tracking-wide text-muted-foreground">{dateLabel}</p>
+        <p className="text-xs tracking-wide text-muted-foreground">{currentDate}</p>
         <h1 className="text-2xl md:text-3xl font-bold text-foreground mt-1">
-          Good morning, Super Admin <span aria-hidden>👋</span>
+          {greeting}, Admin <span aria-hidden>👋</span>
         </h1>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-4">
-        <div className="bg-white rounded-2xl border border-black/5 p-5 relative overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-black/5 dark:border-white/10 p-5 relative overflow-hidden">
           <div className="absolute left-0 top-0 h-full w-2 bg-emerald-500/70" />
           <div className="flex items-start gap-3">
             <div>
-              <div className="text-sm text-muted-foreground font-medium">TOTAL DRIVES</div>
-              <div className="text-3xl font-bold text-foreground">{stats.totalDrives.toLocaleString()}</div>
+              <div className="text-sm text-muted-foreground dark:text-slate-300 font-medium">TOTAL DRIVES</div>
+              <div className="text-3xl font-bold text-foreground dark:text-white">{stats.totalDrives.toLocaleString()}</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-black/5 p-5 relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-black/5 dark:border-white/10 p-5 relative overflow-hidden">
           <div className="absolute left-0 top-0 h-full w-2 bg-blue-500/70" />
           <div className="flex items-start gap-3">
             <div>
-              <div className="text-sm text-muted-foreground font-medium">TOTAL STUDENTS</div>
-              <div className="text-3xl font-bold text-foreground">{stats.totalStudents.toLocaleString()}</div>
+              <div className="text-sm text-muted-foreground dark:text-slate-300 font-medium">TOTAL STUDENTS</div>
+              <div className="text-3xl font-bold text-foreground dark:text-white">{stats.totalStudents.toLocaleString()}</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-black/5 p-5 relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-black/5 dark:border-white/10 p-5 relative overflow-hidden">
           <div className="absolute left-0 top-0 h-full w-2 bg-purple-500/70" />
           <div className="flex items-start gap-3">
             <div>
-              <div className="text-sm text-muted-foreground font-medium">TPO OFFICERS</div>
-              <div className="text-3xl font-bold text-foreground"></div>
+              <div className="text-sm text-muted-foreground dark:text-slate-300 font-medium">TPO OFFICERS</div>
+              <div className="text-3xl font-bold text-foreground dark:text-white"></div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-black/5 p-5 relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-black/5 dark:border-white/10 p-5 relative overflow-hidden">
           <div className="absolute left-0 top-0 h-full w-2 bg-amber-500/70" />
           <div className="flex items-start gap-3">
             <div>
-              <div className="text-sm text-muted-foreground font-medium">OFFERS GIVEN</div>
-              <div className="text-3xl font-bold text-foreground">{stats.offersGiven.toLocaleString()}</div>
+              <div className="text-sm text-muted-foreground dark:text-slate-300 font-medium">OFFERS GIVEN</div>
+              <div className="text-3xl font-bold text-foreground dark:text-white">{stats.offersGiven.toLocaleString()}</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-black/5 p-5 relative overflow-hidden col-span-1 sm:col-span-2 xl:col-span-3">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-black/5 dark:border-white/10 p-5 relative overflow-hidden">
           <div className="absolute left-0 top-0 h-full w-2 bg-teal-500/70" />
           <div className="flex items-start gap-3">
             <div>
-              <div className="text-sm text-muted-foreground font-medium">PLACEMENT RATE</div>
-              <div className="text-3xl font-bold text-foreground">{stats.placementRate}%</div>
+              <div className="text-sm text-muted-foreground dark:text-slate-300 font-medium">PLACEMENT RATE</div>
+              <div className="text-3xl font-bold text-foreground dark:text-white">{stats.placementRate}%</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-black/5 p-5 relative overflow-hidden col-span-1 sm:col-span-1 xl:col-span-3">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-black/5 dark:border-white/10 p-5 relative overflow-hidden">
           <div className="absolute left-0 top-0 h-full w-2 bg-rose-500/70" />
           <div className="flex items-start gap-3">
             <div>
-              <div className="text-sm text-muted-foreground font-medium">ACTIVE DRIVES</div>
-              <div className="text-3xl font-bold text-foreground">{stats.activeDrives.toLocaleString()}</div>
+              <div className="text-sm text-muted-foreground dark:text-slate-300 font-medium">ACTIVE DRIVES</div>
+              <div className="text-3xl font-bold text-foreground dark:text-white">{stats.activeDrives.toLocaleString()}</div>
             </div>
           </div>
         </div>
@@ -188,21 +237,21 @@ export default function AdminDashboard() {
             </Link>
           </div>
 
-          <div className="bg-white rounded-2xl border border-black/5 p-4">
-            <div className="divide-y divide-black/5">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-black/5 dark:border-white/10 p-4">
+            <div className="divide-y divide-black/5 dark:divide-white/10">
               {recentDrives.map((d: any) => {
                 const status = d.status === 'OPEN' ? 'ACTIVE' : 'COMPLETED';
                 return (
                   <div key={d.id} className="py-4 flex items-start justify-between gap-4">
                     <div className="flex items-start gap-4 min-w-0">
-                      <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">
+                      <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-sm font-bold text-blue-700 dark:text-blue-200">
                         {String(d.companyName ?? '?').charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <div className="font-semibold text-foreground truncate">
+                        <div className="font-semibold text-foreground dark:text-white truncate">
                           {d.companyName} - {d.role}
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="text-xs text-muted-foreground dark:text-slate-400 mt-1">
                           ₹{d.lpaPackage} LPA - {d.minimumCgpa}+ - {formatShortDate(d.lastDate)}
                         </div>
                       </div>
@@ -223,9 +272,9 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-black/5 p-4">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-black/5 dark:border-white/10 p-4">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground">PLACEMENT BY BRANCH</h2>
+            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground dark:text-slate-300">PLACEMENT BY BRANCH</h2>
           </div>
           <div className="space-y-4 mt-4">
             {placementByBranch.map((r, idx) => {
@@ -233,13 +282,13 @@ export default function AdminDashboard() {
               const barColor = colors[idx % colors.length];
               return (
                 <div key={r.branch} className="flex items-center gap-4">
-                  <div className="w-16 text-sm font-semibold text-muted-foreground truncate">{r.branch}</div>
+                  <div className="w-16 text-sm font-semibold text-muted-foreground dark:text-slate-300 truncate">{r.branch}</div>
                   <div className="flex-1">
-                    <div className="h-2.5 bg-black/5 rounded-full overflow-hidden">
+                    <div className="h-2.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
                       <div className={`h-full ${barColor}`} style={{ width: `${r.pct}%` }} />
                     </div>
                   </div>
-                  <div className="w-10 text-right text-sm font-semibold text-foreground">{r.pct}%</div>
+                  <div className="w-10 text-right text-sm font-semibold text-foreground dark:text-white">{r.pct}%</div>
                 </div>
               );
             })}

@@ -824,7 +824,6 @@ function mapDriveData(backendDrive: any): DriveData {
   };
 }
 
-// Removed IN_REVIEW and SELECTED — they don't exist in backend ApplicationStatus enum
 function mapApplicationStatus(status: string): ApplicationData['status'] {
   const statusMap: Record<string, ApplicationData['status']> = {
     'APPLIED':     'Applied',
@@ -874,8 +873,8 @@ async function studentFetch<T>(path: string): Promise<T | null> {
 // These call student endpoints (/api/drives, /api/applications, etc.)
 // Admin endpoints are handled separately in src/lib/api/admin.*.ts
 
-export async function fetchProfile(regdno: string): Promise<StudentProfile | null> {
-  const data = await studentFetch<any>(`/api/students/${regdno}/profile`);
+export async function fetchProfile(): Promise<StudentProfile | null> {
+  const data = await studentFetch<any>(`/api/profile`);
   return data ? mapStudentToProfile(data) : null;
 }
 

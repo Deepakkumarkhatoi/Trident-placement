@@ -116,21 +116,21 @@ export default function StudentsPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-black/5 p-5">
-          <div className="text-sm text-muted-foreground font-medium">TOTAL</div>
-          <div className="text-3xl font-bold text-foreground">{cardCounts.total}</div>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-black/5 dark:border-white/10 p-5">
+          <div className="text-sm text-muted-foreground dark:text-slate-300 font-medium">TOTAL</div>
+          <div className="text-3xl font-bold text-foreground dark:text-white">{cardCounts.total}</div>
         </div>
-        <div className="bg-white rounded-2xl border border-black/5 p-5">
-          <div className="text-sm text-muted-foreground font-medium">PLACED</div>
-          <div className="text-3xl font-bold text-foreground">{cardCounts.placed}</div>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-black/5 dark:border-white/10 p-5">
+          <div className="text-sm text-muted-foreground dark:text-slate-300 font-medium">PLACED</div>
+          <div className="text-3xl font-bold text-foreground dark:text-white">{cardCounts.placed}</div>
         </div>
-        <div className="bg-white rounded-2xl border border-black/5 p-5">
-          <div className="text-sm text-muted-foreground font-medium">APPLYING</div>
-          <div className="text-3xl font-bold text-foreground">{cardCounts.applying}</div>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-black/5 dark:border-white/10 p-5">
+          <div className="text-sm text-muted-foreground dark:text-slate-300 font-medium">APPLYING</div>
+          <div className="text-3xl font-bold text-foreground dark:text-white">{cardCounts.applying}</div>
         </div>
-        <div className="bg-white rounded-2xl border border-black/5 p-5">
-          <div className="text-sm text-muted-foreground font-medium">NOT APPLIED</div>
-          <div className="text-3xl font-bold text-foreground">{cardCounts.notApplied}</div>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-black/5 dark:border-white/10 p-5">
+          <div className="text-sm text-muted-foreground dark:text-slate-300 font-medium">NOT APPLIED</div>
+          <div className="text-3xl font-bold text-foreground dark:text-white">{cardCounts.notApplied}</div>
         </div>
       </div>
 

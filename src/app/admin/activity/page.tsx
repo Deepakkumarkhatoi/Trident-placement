@@ -78,7 +78,7 @@ export default function ActivityLogPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Timestamp</TableHead>
+                <TableHead>Time</TableHead>
                 <TableHead>User</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Action</TableHead>
