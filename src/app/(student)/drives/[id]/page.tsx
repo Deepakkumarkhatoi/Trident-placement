@@ -196,6 +196,8 @@ function StudentJDView({ jd, onBack, driveId, alreadyApplied = false, onApplySuc
   const [applyError, setApplyError] = useState<string | null>(null);
   const [applySuccess, setApplySuccess] = useState(alreadyApplied);
   const [hasApplied, setHasApplied] = useState(alreadyApplied);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [eligibilityErrorReason, setEligibilityErrorReason] = useState<string | null>(null);
 
   const handleApply = async () => {
     if (!session?.user) {
@@ -237,9 +239,39 @@ function StudentJDView({ jd, onBack, driveId, alreadyApplied = false, onApplySuc
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'An error occurred while submitting your application';
       setApplyError(errorMsg);
+      
+      // Check if it's an eligibility error and extract reason
+      const isEligibilityError = errorMsg.toLowerCase().includes('not eligible') || 
+                                 errorMsg.toLowerCase().includes('eligibility') ||
+                                 errorMsg.toLowerCase().includes('required') ||
+                                 errorMsg.toLowerCase().includes('qualification') ||
+                                 errorMsg.toLowerCase().includes('branch') ||
+                                 errorMsg.toLowerCase().includes('cgpa') ||
+                                 errorMsg.toLowerCase().includes('batch') ||
+                                 errorMsg.toLowerCase().includes('backlog');
+      
+      if (isEligibilityError) {
+        setEligibilityErrorReason(errorMsg);
+        setShowErrorModal(true);
+      }
     } finally {
       setIsApplying(false);
     }
+  };
+
+  const extractBriefReason = (errorMsg: string): string => {
+    if (errorMsg.toLowerCase().includes('branch')) {
+      return 'Your branch does not match the eligible branches for this drive';
+    } else if (errorMsg.toLowerCase().includes('cgpa')) {
+      return 'Your CGPA does not meet the minimum requirement';
+    } else if (errorMsg.toLowerCase().includes('batch') || errorMsg.toLowerCase().includes('year')) {
+      return 'Your batch/year is not eligible for this drive';
+    } else if (errorMsg.toLowerCase().includes('backlog')) {
+      return 'You have active backlogs and this drive does not allow them';
+    } else if (errorMsg.toLowerCase().includes('course')) {
+      return 'Your course is not eligible for this drive';
+    }
+    return 'You do not meet the eligibility criteria for this drive';
   };
 
   const driveTypeColor = {
@@ -254,6 +286,37 @@ function StudentJDView({ jd, onBack, driveId, alreadyApplied = false, onApplySuc
 
   return (
     <div className="space-y-6">
+      {/* Eligibility Error Modal */}
+      {showErrorModal && eligibilityErrorReason && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-card border border-border rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4 animate-in fade-in duration-300">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">Not Eligible</h2>
+            </div>
+            
+            <p className="text-sm text-muted-foreground">
+              {extractBriefReason(eligibilityErrorReason)}
+            </p>
+            
+            <div className="pt-2">
+              <button
+                onClick={() => {
+                  setShowErrorModal(false);
+                  setEligibilityErrorReason(null);
+                }}
+                className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg font-medium 
+                  hover:bg-primary/90 transition-colors text-sm"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* STUDENT: Back button (preview mode) */}
       {onBack && (
         <button
@@ -469,7 +532,9 @@ function StudentJDView({ jd, onBack, driveId, alreadyApplied = false, onApplySuc
                   ? 'bg-emerald-500/20 text-emerald-600 border border-emerald-200 cursor-not-allowed'
                   : applySuccess 
                   ? 'bg-emerald-500 text-white hover:bg-emerald-600' 
-                  : applyError 
+                  : showErrorModal
+                  ? 'bg-cyan-400 hover:bg-cyan-300 text-black disabled:bg-cyan-300 disabled:opacity-70'
+                  : applyError && !showErrorModal
                   ? 'bg-destructive text-white hover:bg-destructive/90'
                   : 'bg-cyan-400 hover:bg-cyan-300 text-black disabled:bg-cyan-300 disabled:opacity-70'}`}
             >
@@ -504,7 +569,7 @@ function StudentJDView({ jd, onBack, driveId, alreadyApplied = false, onApplySuc
                 ⏰ Deadline: {formatDate(parseDate(jd.lastDateApplication))}
               </p>
             )}
-            {applyError && (
+            {applyError && !showErrorModal && (
               <p className="text-[11px] text-center text-destructive font-medium bg-destructive/10 p-2 rounded">
                 {applyError}
               </p>
