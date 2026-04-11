@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/src/components/DashboardLayout';
+import CgpaDisplay from '@/src/components/CgpaDisplay';
 import { Button } from '@/src/components/ui/button';
 import { fetchProfile, StudentProfile } from '@/src/lib/backend';
 import { Mail, Phone, MapPin, GraduationCap, Award, Edit } from 'lucide-react';
@@ -116,6 +117,16 @@ export default function Profile() {
             )}
           </div>
         </div>
+
+        {/* CGPA Display */}
+        {profile && (
+          <div className="md:col-span-2 opacity-0 animate-fade-in" style={{ animationDelay: '300ms' }}>
+            <h3 className="text-sm font-semibold tracking-widest uppercase text-muted-foreground mb-4">
+              CGPA Information
+            </h3>
+            <CgpaDisplay regdno={profile.rollNumber} initialCgpa={profile.cgpa} />
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

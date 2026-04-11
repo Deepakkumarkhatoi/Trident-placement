@@ -8,6 +8,7 @@ import { ArrowLeft, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { adminDrivesApi, type AdminDriveResponse } from '@/src/lib/api/admin.drives';
+import { isDriveActive } from '@/src/lib/utils';
 
 export default function DriveDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -43,8 +44,8 @@ export default function DriveDetailPage() {
                   <CardTitle className="text-3xl">{drive.companyName}</CardTitle>
                   <p className="text-muted-foreground mt-2">{drive.role}</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full font-medium ${drive.status === 'OPEN' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                  {drive.status}
+                <span className={`px-3 py-1 rounded-full font-medium ${isDriveActive(drive.lastDate) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  {isDriveActive(drive.lastDate) ? 'ACTIVE' : 'CLOSED'}
                 </span>
               </div>
             </CardHeader>

@@ -964,15 +964,23 @@ export async function fetchApplicationsByStatus(
 export async function applyToDrive(studentId: string, driveId: string) {
   try {
     const headers = await getAuthHeaders();
-    const response = await fetch(
-      `${BACKEND_URL}/api/applications/${studentId}/apply/${driveId}`,
-      { method: 'POST', headers }
-    );
-    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-    return await response.json();
+    const url = `${BACKEND_URL}/api/applications/${studentId}/apply/${driveId}`;
+    console.log('📤 Applying to drive:', { studentId, driveId, url });
+    
+    const response = await fetch(url, { method: 'POST', headers });
+    
+    if (!response.ok) {
+      const errorData = await response.text().catch(() => '');
+      console.error('❌ Apply failed:', { status: response.status, error: errorData });
+      throw new Error(`${response.status} ${response.statusText} - ${errorData}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Application submitted successfully');
+    return data;
   } catch (error) {
-    console.error('Error applying to drive:', error);
-    return null;
+    console.error('❌ Error applying to drive:', error);
+    throw error;
   }
 }
 

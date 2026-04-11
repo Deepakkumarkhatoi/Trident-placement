@@ -6,7 +6,8 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '@/src/components/DashboardLayout';
 import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
-import { fetchApplications, ApplicationData } from '@/src/lib/backend';
+import { fetchApplications, fetchProfile, ApplicationData } from '@/src/lib/backend';
+import { formatApplicationDate } from '@/src/lib/dateUtils';
 import { ExternalLink } from 'lucide-react';
 
 type Status = 'Applied' | 'In Review' | 'Shortlisted' | 'Selected' | 'Rejected';
@@ -27,8 +28,9 @@ export default function Applications() {
     const loadApplications = async () => {
       try {
         setLoading(true);
-        const studentId = '0601289127'; ////for tetsing, replace with actual student ID from auth context
-        const apps = await fetchApplications(studentId);
+        const profile = await fetchProfile();
+        if (!profile) throw new Error('Failed to load student profile');
+        const apps = await fetchApplications(profile.rollNumber);
         setApplications(apps);
       } catch (error) {
         console.error('Error loading applications:', error);
@@ -49,7 +51,7 @@ export default function Applications() {
         {[
           { label: 'Total Applied', value: applications.length, color: 'text-primary' },
           { label: 'Active', value: applications.filter(a => !['Selected', 'Rejected'].includes(a.status)).length, color: 'text-warning' },
-          { label: 'Offers', value: applications.filter(a => a.status === 'Selected').length, color: 'text-success' },
+          { label: 'Offers', value: applications.filter(a => a.status === 'Approved').length, color: 'text-success' },
         ].map((s) => (
           <div key={s.label} className="bg-card border border-border rounded-xl p-5">
             <p className="text-xs tracking-widest uppercase text-muted-foreground mb-2">{s.label}</p>
@@ -79,7 +81,7 @@ export default function Applications() {
                     <td className="px-5 py-4 font-medium text-foreground">{app.company}</td>
                     <td className="px-5 py-4 text-muted-foreground">{app.role}</td>
                     <td className="px-5 py-4 text-foreground font-semibold">{app.lpa}</td>
-                    <td className="px-5 py-4 text-muted-foreground">{app.appliedOn}</td>
+                    <td className="px-5 py-4 text-muted-foreground">{formatApplicationDate(app.appliedOn)}</td>
                     <td className="px-5 py-4 text-muted-foreground">{app.round}</td>
                     <td className="px-5 py-4">
                       <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-md border ${statusStyles[app.status]}`}>

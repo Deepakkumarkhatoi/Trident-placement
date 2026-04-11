@@ -6,7 +6,7 @@ import StatsCard from '@/src/components/StatsCard';
 import DriveCard from '@/src/components/DriveCard';
 import RecommendedJobs from '@/src/components/RecommendedJobs';
 import Link from 'next/link';
-import { fetchOpenDrives, fetchApplications, fetchProfile, StatsData, DriveData } from '@/src/lib/backend';
+import { fetchOpenDrives, fetchApplications, fetchProfile, fetchEligibleDrives, StatsData, DriveData } from '@/src/lib/backend';
 
 export default function Home() {
   const [dateStr, setDateStr] = useState<string>('');
@@ -31,15 +31,18 @@ export default function Home() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const studentId = '0601289127';
+        const profile = await fetchProfile();
+        if (!profile) throw new Error('Failed to load student profile');
 
-        const [openDrives, applications, profile] = await Promise.all([
+        const [openDrives, eligibleDrives, applications] = await Promise.all([
           fetchOpenDrives(),
-          fetchApplications(studentId),
-          fetchProfile(studentId),
+          fetchEligibleDrives(profile.rollNumber),
+          fetchApplications(profile.rollNumber),
         ]);
 
-        setDrives(openDrives.slice(0, 3));
+        // Prefer eligible drives, fallback to open drives, and show the 3 most recent
+        const drivesToShow = eligibleDrives.length > 0 ? eligibleDrives : openDrives;
+        setDrives(drivesToShow.slice(0, 3));
 
         const appliedIds = new Set(applications.map(app => app.driveId?.toString() || ''));
         setAppliedDriveIds(appliedIds);
@@ -62,7 +65,7 @@ export default function Home() {
           },
           {
             label: 'Selected',
-            value: applications.filter(a => a.status === 'Selected').length,
+            value: applications.filter(a => a.status === 'Approved').length,
             color: 'info',
           },
         ];
@@ -111,7 +114,7 @@ export default function Home() {
           <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">
             // ELIGIBLE DRIVES
           </h2>
-          <Link href="/drives" className="text-xs font-semibold text-primary hover:underline">
+          <Link href="/drives" className="text-xs font-semibold text-primary ">
             View all →
           </Link>
         </div>

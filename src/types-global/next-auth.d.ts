@@ -7,6 +7,7 @@ declare module "next-auth" {
     user: {
       email?: string;
       role?: string;
+      regdno?: string;
       accessToken?: string;
       menuBlade?: {
         redirectUrl: string;
@@ -23,6 +24,7 @@ declare module "next-auth/jwt" {
     refreshToken?: string;
     expiresAt?: number;
     role?: string;
+    regdno?: string;
     menuBlade?: {
       redirectUrl: string;
       allowedRoutes: string[];

@@ -28,6 +28,5 @@ export async function apiFetch<T>(
   }
 
   const data = await res.json();
-  // Backend wraps everything in { success, message, data }
   return (data.data ?? data) as T;
 }

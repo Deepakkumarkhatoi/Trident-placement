@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Eye, Search } from 'lucide-react';
+import { Eye, Search, RefreshCw } from 'lucide-react';
+import { useToast } from '@/src/hooks/use-toast';
 
 import { adminStudentsApi, type StudentSummaryDTO } from '@/src/lib/api/admin.students';
+import { adminCgpaApi } from '@/src/lib/api/admin.cgpa';
 import { Card, CardContent } from '@/src/components/ui/card';
 import { Input } from '@/src/components/ui/input';
 import { Button } from '@/src/components/ui/button';
@@ -28,8 +30,11 @@ function statusPill(s: StudentSummaryDTO) {
 }
 
 export default function StudentsPage() {
-  const [allStudents, setAllStudents] = useState<StudentSummaryDTO[]>([]);
+  const { toast } = useToast();
+  const [students, setStudents] = useState<StudentSummaryDTO[]>([]);
+  const [totalStudentsCount, setTotalStudentsCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [page, setPage] = useState(0); 
 
@@ -46,29 +51,26 @@ export default function StudentsPage() {
     return [];
   }
 
+  // Load data from backend with pagination
   useEffect(() => {
     setLoading(true);
     adminStudentsApi
-      .getAll()
-      .then((res: StudentSummaryDTO[]) => {
-        setAllStudents(normalizeStudents(res));
+      .list({ page, size: pageSize, q: q.trim() })
+      .then((res: any) => {
+        const content = normalizeStudents(res?.content || res);
+        setStudents(content);
+        setTotalStudentsCount(res?.totalElements || content.length);
       })
       .catch(() => {
-        setAllStudents([]);
+        setStudents([]);
+        setTotalStudentsCount(0);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [page, q]);
 
+  // Apply client-side filters on the 20 students currently loaded
   const filtered = useMemo(() => {
-    const query = q.trim().toLowerCase();
-    const base = allStudents;
-    return base.filter((s) => {
-      const matchText =
-        !query ||
-        s.name.toLowerCase().includes(query) ||
-        s.regdno.toLowerCase().includes(query) ||
-        s.email.toLowerCase().includes(query) ||
-        (s.branch || '').toLowerCase().includes(query);
+    return students.filter((s) => {
       const matchBranch = branch === 'ALL' ? true : (s.branch || '—') === branch;
       const isPlaced = s.placedCount > 0;
       const isApplying = !isPlaced && s.totalApplications > 0;
@@ -83,15 +85,25 @@ export default function StudentsPage() {
               : status === 'NOT_APPLIED'
                 ? isNot
                 : true;
-      return matchText && matchBranch && matchStatus;
+      return matchBranch && matchStatus;
     });
-  }, [allStudents, q, branch, status]);
+  }, [students, branch, status]);
 
-  const branches = useMemo(() => {
-    const set = new Set<string>();
-    allStudents.forEach((s) => set.add(s.branch || '—'));
-    return Array.from(set).filter(Boolean).sort();
-  }, [allStudents]);
+  // Get branches from all data (you may want to fetch this from a separate endpoint)
+  const [allBranches, setAllBranches] = useState<string[]>([]);
+  useEffect(() => {
+    adminStudentsApi
+      .list({ page: 0, size: 1000 })
+      .then((res: any) => {
+        const content = normalizeStudents(res?.content || res);
+        const set = new Set<string>();
+        content.forEach((s) => set.add(s.branch || '—'));
+        setAllBranches(Array.from(set).filter(Boolean).sort());
+      })
+      .catch(() => {
+        setAllBranches([]);
+      });
+  }, []);
 
   const cardCounts = useMemo(() => {
     const placed = filtered.filter((s) => s.placedCount > 0).length;
@@ -100,19 +112,45 @@ export default function StudentsPage() {
     return { total: filtered.length, placed, applying, notApplied };
   }, [filtered]);
 
-  const totalPages = useMemo(() => Math.ceil(filtered.length / pageSize), [filtered.length]);
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(totalStudentsCount / pageSize)), [totalStudentsCount]);
 
-  const paginatedStudents = useMemo(() => {
-    const start = page * pageSize;
-    const end = start + pageSize;
-    return filtered.slice(start, end);
-  }, [filtered, page]);
+  const handleRefreshAllCgpa = async () => {
+    setRefreshing(true);
+    try {
+      await adminCgpaApi.refreshAllCgpa();
+      toast({
+        title: 'Success',
+        description: 'CGPA refreshed for all students',
+        variant: 'default',
+      } as any);
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err?.message || 'Failed to refresh CGPA',
+        variant: 'destructive',
+      } as any);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Student Management</h1>
-        <p className="text-muted-foreground mt-2 text-sm">Manage records, CGPA, status — {cardCounts.total} total students</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Student Management</h1>
+          <p className="text-muted-foreground mt-2 text-sm">Manage records, CGPA, status — {totalStudentsCount || ''} total students</p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleRefreshAllCgpa}
+            disabled={refreshing}
+            className="gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh CGPA
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -159,7 +197,7 @@ export default function StudentsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Branches</SelectItem>
-                {branches.map((b) => (
+                {allBranches.map((b) => (
                   <SelectItem key={b} value={b}>
                     {b}
                   </SelectItem>
@@ -210,7 +248,7 @@ export default function StudentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedStudents.map((s) => (
+                  {filtered.map((s) => (
                     <TableRow key={s.regdno}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
@@ -225,7 +263,13 @@ export default function StudentsPage() {
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{s.regdno}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{s.branch || ''}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground"></TableCell>
+                      <TableCell className="text-sm font-medium">
+                        {s.cgpa 
+                          ? typeof s.cgpa === 'string' 
+                            ? parseFloat(s.cgpa).toFixed(2) 
+                            : s.cgpa.toFixed(2)
+                          : '—'}
+                      </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-700 border border-blue-500/20">
                           {s.totalApplications}
@@ -252,33 +296,61 @@ export default function StudentsPage() {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex items-center justify-between mt-6 flex-wrap gap-4">
             <div className="text-sm text-muted-foreground">
-              Showing {filtered.length === 0 ? 0 : page * pageSize + 1} – {Math.min((page + 1) * pageSize, filtered.length)} of {filtered.length}
+              Showing {totalStudentsCount === 0 ? 0 : page * pageSize + 1} – {Math.min((page + 1) * pageSize, totalStudentsCount)} of {totalStudentsCount}
             </div>
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" disabled={page <= 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                disabled={page === 0} 
+                onClick={() => setPage(0)}
+              >
+                First
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                disabled={page === 0} 
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
                 Prev
               </Button>
+              
               <div className="flex items-center gap-1 mx-2">
-                {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
-                  const start = Math.max(0, Math.min(page - 1, totalPages - 3));
-                  return start + i;
+                {Array.from({ length: Math.min(10, totalPages) }, (_, i) => {
+                  const rangeStart = Math.max(0, Math.min(page - 4, totalPages - 10));
+                  return rangeStart + i;
                 }).map((p) => (
                   <button
                     key={p}
                     onClick={() => setPage(p)}
                     className={[
                       'px-3 py-1 rounded text-sm border transition-colors',
-                      p === page ? 'bg-primary text-primary-foreground font-semibold border-primary' : 'bg-background hover:bg-accent',
+                      p === page ? 'bg-primary text-primary-foreground font-semibold border-primary' : 'bg-background hover:bg-accent border-border',
                     ].join(' ')}
                   >
                     {p + 1}
                   </button>
                 ))}
               </div>
-              <Button size="sm" variant="outline" disabled={page >= Math.max(0, totalPages - 1)} onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}>
+              
+              <Button 
+                size="sm" 
+                variant="outline" 
+                disabled={page === totalPages - 1} 
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              >
                 Next
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                disabled={page === totalPages - 1} 
+                onClick={() => setPage(totalPages - 1)}
+              >
+                Last
               </Button>
             </div>
           </div>

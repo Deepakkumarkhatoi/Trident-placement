@@ -47,7 +47,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set initial date and greeting
     const today = new Date();
     const dateStr = today.toLocaleDateString('en-US', { 
       weekday: 'long', 
@@ -58,12 +57,10 @@ export default function AdminDashboard() {
     setCurrentDate(dateStr);
     setGreeting(getGreeting());
 
-    // Update greeting every minute
     const greetingInterval = setInterval(() => {
       setGreeting(getGreeting());
     }, 60000);
 
-    // Update date at midnight
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);

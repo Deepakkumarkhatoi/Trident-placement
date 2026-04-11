@@ -180,21 +180,39 @@ interface MenuBlade {
 }
 
 async function fetchUserData(accessToken: string) {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND}/api/get-user-role`,
-    {
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND;
+  
+  if (!backendUrl) {
+    console.error("❌ NEXT_PUBLIC_BACKEND environment variable is not set");
+    throw new Error("Backend URL not configured");
+  }
+
+  const url = `${backendUrl}/api/get-user-role`;
+  console.log(`📡 Fetching user data from: ${url}`);
+
+  try {
+    const response = await fetch(url, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
       },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error(`❌ Backend returned ${response.status}: ${errorData}`);
+      throw new Error(`Failed to fetch user role: ${response.status}`);
     }
-  );
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch user role");
+    const data = await response.json();
+    console.log("✅ User data fetched successfully");
+    return data;
+  } catch (error: any) {
+    console.error("❌ Error fetching user data:", error.message);
+    console.error("   Make sure your backend is running on:", backendUrl);
+    throw error;
   }
-
-  return response.json();
 }
 
 export const authOptions: NextAuthOptions = {
@@ -224,20 +242,37 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
 
-    async jwt({ token, account }): Promise<JWT> {
+    async jwt({ token, account, profile }): Promise<JWT> {
 
       if (account) {
-
-        const userData = await fetchUserData(account.access_token!);
-
         token.accessToken = account.access_token;
-        token.role = userData.role;
 
-        token.menuBlade = {
-          redirectUrl: userData.redirectUrl,
-          allowedRoutes: userData.allowedRoutes,
-        };
-
+        try {
+          const userData = await fetchUserData(account.access_token!);
+          token.role = userData.role;
+          token.regdno = userData.regdno;
+          token.menuBlade = {
+            redirectUrl: userData.redirectUrl,
+            allowedRoutes: userData.allowedRoutes,
+          };
+        } catch (error: any) {
+          console.warn("⚠️  Could not fetch user data from backend. Using default values.");
+          console.warn("   Error:", error.message);
+          // Set default values for graceful degradation
+          token.role = "student";
+          // Try to extract student ID from email
+          let regdno = "";
+          if (profile?.email) {
+            const emailParts = profile.email.split('@');
+            regdno = emailParts[0] || "";
+            console.log("📧 Extracted from email:", regdno);
+          }
+          token.regdno = regdno;
+          token.menuBlade = {
+            redirectUrl: "/",
+            allowedRoutes: ["/dashboard", "/profile"],
+          };
+        }
       }
 
       return token;
@@ -247,6 +282,7 @@ export const authOptions: NextAuthOptions = {
 
       if (token) {
         (session.user as any).role = token.role;
+        (session.user as any).regdno = token.regdno;
         (session.user as any).menuBlade = token.menuBlade;
         (session.user as any).accessToken = token.accessToken;
       }

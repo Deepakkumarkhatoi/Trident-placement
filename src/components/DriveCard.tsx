@@ -1,5 +1,7 @@
 import { Button } from '@/src/components/ui/button';
 import Link from 'next/link';
+import { isDriveActive } from '@/src/lib/utils';
+import { useState } from 'react';
 
 interface DriveCardProps {
   id: string;
@@ -17,6 +19,14 @@ interface DriveCardProps {
 }
 
 const DriveCard = ({ id, company, role, type, lpa, cgpa, lastDate, description, initial, color, delay = 0, applied = false }: DriveCardProps) => {
+  const isActive = isDriveActive(lastDate);
+  const [showBlocked, setShowBlocked] = useState(false);
+  
+  const handleClosedApply = () => {
+    setShowBlocked(true);
+    setTimeout(() => setShowBlocked(false), 2000);
+  };
+  
   return (
     <div
       className="bg-card border border-border rounded-xl p-4 md:p-5 flex flex-col justify-between hover:border-primary/30 transition-all duration-300 opacity-0 animate-fade-in min-w-0"
@@ -36,15 +46,26 @@ const DriveCard = ({ id, company, role, type, lpa, cgpa, lastDate, description, 
               <p className="text-xs text-muted-foreground">{role}</p>
             </div>
           </div>
-          <span
-            className={`text-[11px] font-semibold px-2.5 py-1 rounded-md border ${
-              type === 'On-Campus'
-                ? 'text-success border-success/30 bg-success/10'
-                : 'text-info border-info/30 bg-info/10'
-            }`}
-          >
-            {type}
-          </span>
+          <div className="flex flex-row gap-2 items-center">
+            <span
+              className={`text-[10px] font-semibold px-2 py-1 rounded-md border ${
+                isActive
+                  ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                  : 'bg-red-100 text-red-700 border-red-200'
+              }`}
+            >
+              {isActive ? 'ACTIVE' : 'CLOSED'}
+            </span>
+            <span
+              className={`text-[11px] font-semibold px-2.5 py-1 rounded-md border ${
+                type === 'On-Campus'
+                  ? 'text-success border-success/30 bg-success/10'
+                  : 'text-info border-info/30 bg-info/10'
+              }`}
+            >
+              {type}
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-3 mb-3 text-xs">
@@ -70,8 +91,13 @@ const DriveCard = ({ id, company, role, type, lpa, cgpa, lastDate, description, 
           <Link href={`/drives/${id}`}>View Details</Link>
         </Button>
         {!applied ? (
-          <Button size="sm" className="flex-1 text-xs">
-            Apply Now →
+          <Button 
+            size="sm" 
+            className="flex-1 text-xs" 
+            onClick={() => !isActive && handleClosedApply()}
+            disabled={!isActive && !showBlocked}
+          >
+            {showBlocked ? '🚫' : isActive ? 'Apply Now →' : 'Apply Now →'}
           </Button>
         ) : (
           <Button size="sm" className="flex-1 text-xs bg-green-500/20 text-green-600 hover:bg-green-500/30 cursor-not-allowed" disabled>

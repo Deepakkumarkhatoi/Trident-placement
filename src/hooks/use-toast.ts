@@ -16,6 +16,7 @@ type ToasterToast = {
   action?: ToastActionElement
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  variant?: 'default' | 'destructive'
 }
 
 const actionTypes = {
@@ -139,16 +140,17 @@ function dispatch(action: Action) {
 }
 
 type ToastType = {
-  id: string
+  id?: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  variant?: 'default' | 'destructive'
 }
 
-function toast({ ...props }: ToastType) {
-  const id = genId()
+function toast(props?: ToastType) {
+  const id = (props?.id) || genId()
 
   const update = (props: ToasterToast) =>
     dispatch({
@@ -160,7 +162,7 @@ function toast({ ...props }: ToastType) {
   dispatch({
     type: "ADD_TOAST",
     toast: {
-      ...props,
+      ...(props || {}),
       id,
       open: true,
       onOpenChange: (open: boolean) => {

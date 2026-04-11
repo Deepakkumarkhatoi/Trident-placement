@@ -1,12 +1,11 @@
 'use client';
 
-
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/src/components/DashboardLayout';
 import DriveCard from '@/src/components/DriveCard';
-import { fetchDrives, fetchApplications, DriveData } from '@/src/lib/backend';
+import { fetchDrives, fetchApplications, fetchProfile, fetchEligibleDrives, DriveData } from '@/src/lib/backend';
 import { Search, Filter } from 'lucide-react';
 
 export default function Drives() {
@@ -20,12 +19,17 @@ export default function Drives() {
     const loadDrives = async () => {
       try {
         setLoading(true);
-        const drivesData = await fetchDrives();
+        const profile = await fetchProfile();
+        if (!profile) throw new Error('Failed to load student profile');
+        
+        // Try to fetch eligible drives first, fallback to all drives
+        let drivesData = await fetchEligibleDrives(profile.rollNumber);
+        if (!drivesData || drivesData.length === 0) {
+          drivesData = await fetchDrives();
+        }
         setAllDrives(drivesData);
 
-        // Fetch applications to get applied drive IDs
-        const studentId = '0601289127';
-        const applications = await fetchApplications(studentId);
+        const applications = await fetchApplications(profile.rollNumber);
         const appliedIds = new Set(applications.map(app => app.driveId?.toString() || ''));
         setAppliedDriveIds(appliedIds);
       } catch (error) {

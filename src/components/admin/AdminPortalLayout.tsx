@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { ReactNode, useEffect, useMemo, useState } from 'react';
@@ -34,7 +33,7 @@ export default function AdminPortalLayout({ children }: Props) {
 
   useEffect(() => {
     setMounted(true);
-    // Set initial theme to light if not already set
+   
     if (!theme) {
       setTheme('light');
     }
@@ -163,7 +162,7 @@ export default function AdminPortalLayout({ children }: Props) {
         <div className="px-6 py-5 border-t border-white/10">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center font-black text-sm">
-              SA
+              A
             </div>
             <div>
               <p className="text-xs text-white/60">Admin</p>
@@ -176,7 +175,7 @@ export default function AdminPortalLayout({ children }: Props) {
       <div className="pl-[270px]">
         <header className="sticky top-0 z-40 bg-[#f5f7fb] dark:bg-slate-900 border-b border-black/5 dark:border-white/10">
           <div className="px-8 py-4 flex items-center justify-between gap-4">
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex items-left justify-start gap-6">
               <div className="relative w-full max-w-[520px]">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8a93a5] dark:text-slate-400" />
                 <input

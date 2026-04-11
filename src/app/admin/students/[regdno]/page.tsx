@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { adminStudentsApi, type StudentDTO } from '@/src/lib/api/admin.students';
 import type { AdminApplicationResponse } from '@/src/lib/api/admin.applications';
+import CgpaDisplay from '@/src/components/CgpaDisplay';
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
@@ -70,7 +71,7 @@ export default function StudentDetailPage() {
                   ['Admission Year',  student.admissionYear],
                   ['Degree YOP',      student.degreeYop],
                   ['College',         student.collegeName],
-                ].map(([label, val]) => val ? (
+                ].map(([label, val]) => val && val !== 'N/A' ? (
                   <div key={label as string}>
                     <p className="text-sm text-muted-foreground">{label}</p>
                     <p className="text-foreground font-medium mt-1">{val}</p>
@@ -79,6 +80,16 @@ export default function StudentDetailPage() {
               </div>
             </CardContent>
           </Card>
+
+          {student.cgpa && (
+            <div>
+              <h3 className="text-sm font-semibold tracking-widest uppercase text-muted-foreground mb-4">CGPA Information</h3>
+              <CgpaDisplay 
+                regdno={student.regdno}
+                initialCgpa={student.cgpa}
+              />
+            </div>
+          )}
 
           <Card>
             <CardHeader><CardTitle>Applications ({applications.length})</CardTitle></CardHeader>

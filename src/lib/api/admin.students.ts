@@ -21,6 +21,7 @@ export interface StudentSummaryDTO {
   status: string;
   totalApplications: number;
   placedCount: number;
+  cgpa?: number | string;
 }
 
 export interface PaginatedResponse<T> {
@@ -43,6 +44,7 @@ export interface StudentDTO {
   email: string;
   status: string;
   collegeName?: string;
+  cgpa?: number | string;
 }
 
 export const adminStudentsApi = {
