@@ -288,29 +288,69 @@ function StudentJDView({ jd, onBack, driveId, alreadyApplied = false, onApplySuc
     <div className="space-y-6">
       {/* Eligibility Error Modal */}
       {showErrorModal && eligibilityErrorReason && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-card border border-border rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4 animate-in fade-in duration-300">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                <AlertCircle className="w-5 h-5 text-red-600" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-gradient-to-br from-card to-card/95 border border-border/60 rounded-2xl shadow-2xl max-w-md w-full p-0 space-y-0 animate-in fade-in duration-300 overflow-hidden">
+            {/* Header with gradient background */}
+            <div className="bg-gradient-to-r from-red-500/10 to-red-500/5 border-b border-border/40 px-6 py-5">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-red-100/80 dark:bg-red-500/20 flex items-center justify-center flex-shrink-0 shadow-lg">
+                  <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-foreground">Not Eligible</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">You don't meet the requirements</p>
+                </div>
               </div>
-              <h2 className="text-lg font-semibold text-foreground">Not Eligible</h2>
             </div>
             
-            <p className="text-sm text-muted-foreground">
-              {extractBriefReason(eligibilityErrorReason)}
-            </p>
-            
-            <div className="pt-2">
+            {/* Content */}
+            <div className="px-6 py-5 space-y-4">
+              {/* Reason box with icon */}
+              <div className="bg-red-500/5 dark:bg-red-500/10 border border-red-200/40 dark:border-red-500/20 rounded-xl p-4">
+                <div className="flex gap-3">
+                  <div className="text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M13.477 14.89A6 6 0 010 10a6 6 0 0113.476-1.11A6.002 6.002 0 1120 10a6 6 0 01-6.523 6.89M5 10a1 1 0 11-2 0 1 1 0 012 0zm9 0a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-foreground font-medium leading-relaxed">
+                    {extractBriefReason(eligibilityErrorReason)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Details section */}
+              <div className="space-y-2 pt-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">What you can do</p>
+                <ul className="text-sm text-muted-foreground space-y-2">
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 font-bold mt-0.5">•</span>
+                    <span>Check other drives that match your profile</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 font-bold mt-0.5">•</span>
+                    <span>Contact your TPO for details</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 font-bold mt-0.5">•</span>
+                    <span>Check your profile to improve eligibility</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Footer with button */}
+            <div className="bg-muted/30 border-t border-border/40 px-6 py-4 flex gap-3">
               <button
                 onClick={() => {
                   setShowErrorModal(false);
                   setEligibilityErrorReason(null);
                 }}
-                className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg font-medium 
-                  hover:bg-primary/90 transition-colors text-sm"
+                className="flex-1 py-2.5 px-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 
+                  text-white rounded-lg font-semibold text-sm transition-all duration-200 shadow-md hover:shadow-lg 
+                  hover:scale-105 active:scale-95"
               >
-                OK
+                OK, Got It
               </button>
             </div>
           </div>
