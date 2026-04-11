@@ -108,6 +108,7 @@ export default function CreateDrivePage() {
     if (!jd.lastDateApplication) e.lastDateApplication = 'Required';
     if (!jd.aboutCompany) e.aboutCompany = 'Required';
     if (!jd.roleOverview) e.roleOverview = 'Required';
+    if (!jd.allowedBranches || jd.allowedBranches.length === 0) e.allowedBranches = 'Select at least one branch';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -127,6 +128,7 @@ export default function CreateDrivePage() {
         minimumCgpa: parseFloat(jd.cgpaCutoff),
         lastDate: jd.lastDateApplication,
         description: jd.aboutCompany,
+        allowedBranches: jd.allowedBranches,
       });
 
       // Step 2: Create the JD for the drive
@@ -281,7 +283,9 @@ export default function CreateDrivePage() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase">Branches</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase">
+                Branches <span className="text-red-500">*</span>
+              </label>
               <div className="flex flex-wrap gap-2">
                 {BRANCHES.map(b => (
                   <button key={b} onClick={() => toggleBranch(b)} disabled={saving}
@@ -292,6 +296,11 @@ export default function CreateDrivePage() {
                   </button>
                 ))}
               </div>
+              {errors.allowedBranches && (
+                <p className="flex items-center gap-1 text-red-500 text-xs mt-1">
+                  <AlertCircle className="w-3 h-3" />{errors.allowedBranches}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase">Courses</label>

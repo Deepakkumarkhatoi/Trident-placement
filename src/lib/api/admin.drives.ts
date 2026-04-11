@@ -25,6 +25,7 @@ export interface DriveCreateRequest {
   minimumCgpa: number;
   lastDate: string;
   description?: string;
+  allowedBranches: string[];
 }
 
 export interface DriveUpdateRequest {
