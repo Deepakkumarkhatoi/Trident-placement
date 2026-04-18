@@ -2,6 +2,8 @@ import { Button } from '@/src/components/ui/button';
 import Link from 'next/link';
 import { isDriveActive } from '@/src/lib/utils';
 import { useState } from 'react';
+import { useToast } from '@/src/hooks/use-toast';
+import { studentApplicationsApi } from '@/src/lib/api/student.applications';
 
 interface DriveCardProps {
   id: string;
@@ -16,15 +18,73 @@ interface DriveCardProps {
   color: string;
   delay?: number;
   applied?: boolean;
+  onApplySuccess?: () => void;
 }
 
-const DriveCard = ({ id, company, role, type, lpa, cgpa, lastDate, description, initial, color, delay = 0, applied = false }: DriveCardProps) => {
+const DriveCard = ({ 
+  id, 
+  company, 
+  role, 
+  type, 
+  lpa, 
+  cgpa, 
+  lastDate, 
+  description, 
+  initial, 
+  color, 
+  delay = 0, 
+  applied = false,
+  onApplySuccess 
+}: DriveCardProps) => {
   const isActive = isDriveActive(lastDate);
-  const [showBlocked, setShowBlocked] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
+  const [hasApplied, setHasApplied] = useState(applied);
+  const { toast } = useToast();
   
-  const handleClosedApply = () => {
-    setShowBlocked(true);
-    setTimeout(() => setShowBlocked(false), 2000);
+  const handleApply = async () => {
+    if (!isActive) {
+      toast({
+        title: 'Drive Closed',
+        description: 'This drive is no longer accepting applications.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (hasApplied) {
+      toast({
+        title: 'Already Applied',
+        description: 'You have already applied to this drive.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsApplying(true);
+    try {
+      const driveId = parseInt(id, 10);
+      await studentApplicationsApi.apply(driveId);
+      
+      setHasApplied(true);
+      toast({
+        title: 'Application Submitted',
+        description: `Successfully applied to ${company}. Good luck!`,
+      });
+
+      // Notify parent component of successful application
+      if (onApplySuccess) {
+        onApplySuccess();
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || 'Failed to submit application';
+      toast({
+        title: 'Application Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsApplying(false);
+    }
   };
   
   return (
@@ -90,14 +150,24 @@ const DriveCard = ({ id, company, role, type, lpa, cgpa, lastDate, description, 
         <Button variant="outline" size="sm" className="flex-1 text-xs" asChild>
           <Link href={`/drives/${id}`}>View Details</Link>
         </Button>
-        {!applied ? (
+        {!hasApplied ? (
           <Button 
             size="sm" 
             className="flex-1 text-xs" 
-            onClick={() => !isActive && handleClosedApply()}
-            disabled={!isActive && !showBlocked}
+            onClick={handleApply}
+            disabled={isApplying}
+            variant={isActive ? 'default' : 'secondary'}
           >
-            {showBlocked ? '🚫' : isActive ? 'Apply Now →' : 'Apply Now →'}
+            {isApplying ? (
+              <>
+                <span className="inline-block mr-2">⏳</span>
+                Applying...
+              </>
+            ) : isActive ? (
+              <>Apply Now →</>
+            ) : (
+              <>Closed</>
+            )}
           </Button>
         ) : (
           <Button size="sm" className="flex-1 text-xs bg-green-500/20 text-green-600 hover:bg-green-500/30 cursor-not-allowed" disabled>

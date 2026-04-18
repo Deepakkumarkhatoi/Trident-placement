@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/src/components/DashboardLayout';
 import { CheckCircle2, AlertCircle, Info, Calendar, Building2 } from 'lucide-react';
+import { studentNotificationsApi, ShortlistNotification } from '@/src/lib/api/student.notifications';
 
 type NotifType = 'success' | 'warning' | 'info' | 'event' | 'drive';
 
@@ -33,12 +34,66 @@ const colorMap: Record<NotifType, string> = {
   drive: 'text-primary bg-primary/10',
 };
 
+/**
+ * Convert ShortlistNotification from backend to UI Notification format
+ */
+function convertToUINotification(notif: ShortlistNotification): Notification {
+  const isSuccess = notif.status === 'PASSED';
+  const type: NotifType = isSuccess ? 'success' : 'warning';
+  
+  const title = isSuccess ? '✓ Passed Round' : '✗ Failed Round';
+  const desc = notif.message || 
+    `You ${notif.status.toLowerCase()} the ${notif.roundName.replace(/_/g, ' ')} round in ${notif.driveName}`;
+  
+  const sentDate = new Date(notif.sentAt);
+  const now = new Date();
+  const diffMs = now.getTime() - sentDate.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  let time = '';
+  if (diffMins < 1) time = 'Just now';
+  else if (diffMins < 60) time = `${diffMins}m ago`;
+  else if (diffHours < 24) time = `${diffHours}h ago`;
+  else if (diffDays < 7) time = `${diffDays}d ago`;
+  else time = sentDate.toLocaleDateString();
+
+  return {
+    id: notif.id,
+    type,
+    title,
+    desc,
+    time,
+    unread: true,
+  };
+}
+
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Note: Notifications endpoint not available in backend API
-  // You can add GET /api/notifications endpoint in your backend if needed
+  // Fetch notifications on page load
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        setLoading(true);
+        console.log('🔄 Fetching notifications...');
+        const backendNotifications = await studentNotificationsApi.getNotifications();
+        console.log('✅ Notifications fetched:', backendNotifications);
+        const uiNotifications = backendNotifications.map(convertToUINotification);
+        console.log('✅ Converted to UI format:', uiNotifications);
+        setNotifications(uiNotifications);
+      } catch (error) {
+        console.error('❌ Error loading notifications:', error);
+        setNotifications([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 

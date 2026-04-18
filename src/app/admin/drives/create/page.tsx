@@ -28,6 +28,8 @@ interface DriveJD {
   allowedBranches: string[];
   allowedCourses: string[];
   batch: string;
+  eligibleCourse: string;
+  passoutYear: string;
   aboutCompany: string;
   website: string;
   headquarters: string;
@@ -46,7 +48,8 @@ const DEFAULT_JD: DriveJD = {
   lastDateApplication: '', jobLocation: '', employmentType: 'Full Time',
   workMode: 'On-Site', vacancies: '', serviceAgreement: '', joining: '',
   cgpaCutoff: '', backlogsAllowed: false, allowedBranches: [],
-  allowedCourses: [], batch: '', aboutCompany: '', website: '',
+  allowedCourses: [], batch: '', eligibleCourse: '', passoutYear: '',
+  aboutCompany: '', website: '',
   headquarters: '', roleOverview: '', requiredSkills: [''],
   keyResponsibilities: [''], whyJoin: [''],
   selectionProcess: [{ description: '', eliminationRound: true }],
@@ -129,6 +132,8 @@ export default function CreateDrivePage() {
         lastDate: jd.lastDateApplication,
         description: jd.aboutCompany,
         allowedBranches: jd.allowedBranches,
+        eligibleCourse: jd.eligibleCourse || undefined,
+        passoutYear: jd.passoutYear ? parseInt(jd.passoutYear) : undefined,
       });
 
       // Step 2: Create the JD for the drive
@@ -269,6 +274,10 @@ export default function CreateDrivePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {field('CGPA Cutoff', 'cgpaCutoff', 'text', 'e.g. 6.0')}
               {field('Batch', 'batch', 'text', 'e.g. 2026')}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {select('Eligible Course', 'eligibleCourse', ['', 'B.Tech', 'M.Tech', 'MBA', 'MCA', 'B.Sc'])}
+              {field('Passout Year', 'passoutYear', 'text', 'e.g. 2026')}
             </div>
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase">Backlogs</label>

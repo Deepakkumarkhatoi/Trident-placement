@@ -5,7 +5,8 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/src/components/DashboardLayout';
 import DriveCard from '@/src/components/DriveCard';
-import { fetchDrives, fetchApplications, fetchProfile, fetchEligibleDrives, DriveData } from '@/src/lib/backend';
+import { fetchDrives, fetchProfile, fetchEligibleDrives, DriveData } from '@/src/lib/backend';
+import { studentApplicationsApi } from '@/src/lib/api/student.applications';
 import { Search, Filter } from 'lucide-react';
 
 export default function Drives() {
@@ -14,6 +15,17 @@ export default function Drives() {
   const [filter, setFilter] = useState<'All' | 'On-Campus' | 'Virtual'>('All');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+
+  const loadApplications = async () => {
+    try {
+      const applications = await studentApplicationsApi.getMyApplications();
+      const appliedIds = new Set(applications.map(app => app.driveId.toString()));
+      setAppliedDriveIds(appliedIds);
+    } catch (error) {
+      console.error('Error loading applications:', error);
+      // Continue without applications - don't block the page
+    }
+  };
 
   useEffect(() => {
     const loadDrives = async () => {
@@ -29,9 +41,8 @@ export default function Drives() {
         }
         setAllDrives(drivesData);
 
-        const applications = await fetchApplications(profile.rollNumber);
-        const appliedIds = new Set(applications.map(app => app.driveId?.toString() || ''));
-        setAppliedDriveIds(appliedIds);
+        // Load applications using new API
+        await loadApplications();
       } catch (error) {
         console.error('Error loading drives:', error);
         setAllDrives([]);
@@ -42,6 +53,14 @@ export default function Drives() {
 
     loadDrives();
   }, []);
+
+  const handleApplySuccess = (driveId: string) => {
+    // Add the drive to applied set
+    setAppliedDriveIds(prev => new Set([...prev, driveId]));
+    
+    // Optionally refresh all applications
+    loadApplications();
+  };
 
   const filtered = allDrives.filter((d) => {
     const matchType = filter === 'All' || d.type === filter;
@@ -96,7 +115,13 @@ export default function Drives() {
       ) : filtered.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((d, i) => (
-            <DriveCard key={d.id} {...d} delay={i * 100} applied={appliedDriveIds.has(d.id.toString())} />
+            <DriveCard 
+              key={d.id} 
+              {...d} 
+              delay={i * 100} 
+              applied={appliedDriveIds.has(d.id.toString())}
+              onApplySuccess={() => handleApplySuccess(d.id.toString())}
+            />
           ))}
         </div>
       ) : (

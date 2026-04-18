@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Eye, Plus, Search, Download, Trash2 } from 'lucide-react';
+import { Eye, Plus, Search, Download, Trash2, CheckSquare } from 'lucide-react';
 
 import { adminDrivesApi, type AdminDriveResponse, type DriveJDResponse } from '@/src/lib/api/admin.drives';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/src/components/ui/table';
@@ -191,6 +191,7 @@ export default function DrivesPage() {
                     <TableHead>Apply</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>By</TableHead>
+                    <TableHead>Action</TableHead>
                     <TableHead />
                   </TableRow>
                 </TableHeader>
@@ -243,6 +244,11 @@ export default function DrivesPage() {
                         <TableCell className="text-sm text-muted-foreground"></TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-2">
+                            <Link href={`/admin/drives/${drive.id}/shortlist`}>
+                              <Button variant="outline" size="sm" className="p-2 text-blue-600 hover:bg-blue-100 hover:text-blue-700" title="Shortlist Students">
+                                <CheckSquare className="w-4 h-4" />
+                              </Button>
+                            </Link>
                             <Link href={`/admin/drives/${drive.id}`}>
                               <Button variant="ghost" size="sm" className="p-2">
                                 <Eye className="w-4 h-4" />

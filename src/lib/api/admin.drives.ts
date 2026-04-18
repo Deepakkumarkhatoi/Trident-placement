@@ -26,6 +26,8 @@ export interface DriveCreateRequest {
   lastDate: string;
   description?: string;
   allowedBranches: string[];
+  eligibleCourse?: string;
+  passoutYear?: number;
 }
 
 export interface DriveUpdateRequest {
@@ -55,6 +57,8 @@ export interface DriveJDRequest {
   allowedBranches: string[];
   allowedCourses: string[];
   batch: string;
+  eligibleCourse?: string;
+  passoutYear?: string;
   aboutCompany: string;
   website: string;
   headquarters: string;
