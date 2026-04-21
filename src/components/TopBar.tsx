@@ -5,6 +5,7 @@ import { Search, Bell, Moon, Sun, Menu, LogOut } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import { useRouter } from 'next/navigation';
+import { useNotificationsContext } from '@/src/lib/context/NotificationsProvider';
 
 interface TopBarProps {
   onMenuToggle: () => void;
@@ -14,6 +15,7 @@ const TopBar = ({ onMenuToggle }: TopBarProps) => {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const { unreadCount } = useNotificationsContext();
 
   useEffect(() => {
     setMounted(true);
@@ -65,7 +67,11 @@ const TopBar = ({ onMenuToggle }: TopBarProps) => {
           className="relative w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
         >
           <Bell className="w-[18px] h-[18px]" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-5 h-5 rounded-full bg-destructive text-white text-xs font-bold flex items-center justify-center animate-pulse">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </button>
 
         {/* Logout */}
