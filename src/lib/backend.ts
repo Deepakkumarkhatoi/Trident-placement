@@ -759,6 +759,7 @@ export interface DriveData {
   description: string;
   initial: string;
   color: string;
+  branches?: string[]; // Array of branch codes this drive is open for (e.g., ['CSE', 'ETC'])
 }
 export interface StatsData {
   label: string;
@@ -821,6 +822,8 @@ function mapDriveData(backendDrive: any): DriveData {
     description: backendDrive.description || '',
     initial:     companyName.charAt(0).toUpperCase(),
     color:       getColorForCompany(companyName),
+    // Capture branches from backend - could be allowedBranches, branches, or eligibleBranches
+    branches:    backendDrive.allowedBranches || backendDrive.branches || backendDrive.eligibleBranches || [],
   };
 }
 

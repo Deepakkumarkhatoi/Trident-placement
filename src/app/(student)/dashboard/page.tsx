@@ -14,6 +14,7 @@ export default function Home() {
   const [drives, setDrives] = useState<DriveData[]>([]);
   const [appliedDriveIds, setAppliedDriveIds] = useState<Set<string>>(new Set());
   const [studentName, setStudentName] = useState<string>('Student');
+  const [studentBranch, setStudentBranch] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,14 +35,32 @@ export default function Home() {
         const profile = await fetchProfile();
         if (!profile) throw new Error('Failed to load student profile');
 
+        const branch = profile.department || '';
+        setStudentBranch(branch);
+
         const [openDrives, eligibleDrives, applications] = await Promise.all([
           fetchOpenDrives(),
           fetchEligibleDrives(profile.rollNumber),
           fetchApplications(profile.rollNumber),
         ]);
 
-        // Prefer eligible drives, fallback to open drives, and show the 3 most recent
-        const drivesToShow = eligibleDrives.length > 0 ? eligibleDrives : openDrives;
+        // Filter drives by student's branch
+        const filterDrivesByBranch = (drives: DriveData[]) => {
+          return drives.filter(drive => {
+            if (!drive.branches || drive.branches.length === 0) {
+              return true; // No restrictions
+            }
+            return drive.branches.some(b => 
+              b.toUpperCase() === branch.toUpperCase()
+            );
+          });
+        };
+
+        // Prefer eligible drives, fallback to open drives
+        const eligibleDrivesFiltered = filterDrivesByBranch(eligibleDrives);
+        const openDrivesFiltered = filterDrivesByBranch(openDrives);
+        const drivesToShow = eligibleDrivesFiltered.length > 0 ? eligibleDrivesFiltered : openDrivesFiltered;
+        
         setDrives(drivesToShow.slice(0, 3));
 
         const appliedIds = new Set(applications.map(app => app.driveId?.toString() || ''));
@@ -49,8 +68,8 @@ export default function Home() {
 
         const dashboardStats: StatsData[] = [
           {
-            label: 'Available Drives',
-            value: openDrives.length,
+            label: `${branch} Drives`,
+            value: drivesToShow.length,
             color: 'primary',
           },
           {
@@ -112,7 +131,7 @@ export default function Home() {
       <div className="mt-6 md:mt-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">
-            // ELIGIBLE DRIVES
+            // {studentBranch ? `${studentBranch} DRIVES` : 'ELIGIBLE DRIVES'}
           </h2>
           <Link href="/drives" className="text-xs font-semibold text-primary ">
             View all →

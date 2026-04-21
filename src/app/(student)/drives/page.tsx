@@ -15,6 +15,7 @@ export default function Drives() {
   const [filter, setFilter] = useState<'All' | 'On-Campus' | 'Virtual'>('All');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [studentBranch, setStudentBranch] = useState<string>('');
 
   const loadApplications = async () => {
     try {
@@ -34,12 +35,30 @@ export default function Drives() {
         const profile = await fetchProfile();
         if (!profile) throw new Error('Failed to load student profile');
         
+        const branch = profile.department || '';
+        setStudentBranch(branch);
+        
         // Try to fetch eligible drives first, fallback to all drives
         let drivesData = await fetchEligibleDrives(profile.rollNumber);
         if (!drivesData || drivesData.length === 0) {
           drivesData = await fetchDrives();
         }
-        setAllDrives(drivesData);
+        
+        // Filter drives by student's branch
+        // If drive has no branches specified, it's open to all
+        // If drive has branches, only show if student's branch is in the list
+        const filteredDrives = drivesData.filter(drive => {
+          if (!drive.branches || drive.branches.length === 0) {
+            // No branch restrictions, show to all students
+            return true;
+          }
+          // Show only if student's branch is in the allowed branches
+          return drive.branches.some(b => 
+            b.toUpperCase() === branch.toUpperCase()
+          );
+        });
+        
+        setAllDrives(filteredDrives);
 
         // Load applications using new API
         await loadApplications();
@@ -71,7 +90,10 @@ export default function Drives() {
   return (
     <DashboardLayout>
       <h1 className="text-2xl font-display font-bold text-foreground">Placement Drives</h1>
-      <p className="text-sm text-muted-foreground mt-1 mb-8">Browse and apply to available placement opportunities.</p>
+      <p className="text-sm text-muted-foreground mt-1 mb-8">
+        {studentBranch && <span>Showing drives for <span className="font-semibold text-foreground">{studentBranch}</span> • </span>}
+        Browse and apply to available placement opportunities.
+      </p>
 
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="relative flex-1 max-w-md">
@@ -104,7 +126,9 @@ export default function Drives() {
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground mb-4">{loading ? 'Loading...' : `${filtered.length} drives found`}</p>
+      <p className="text-xs text-muted-foreground mb-4">
+        {loading ? 'Loading...' : `${filtered.length} drive${filtered.length !== 1 ? 's' : ''} available for ${studentBranch || 'your branch'}`}
+      </p>
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -125,7 +149,7 @@ export default function Drives() {
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground text-sm">No drives found matching your criteria.</p>
+        <p className="text-muted-foreground text-sm">No drives found matching your criteria{studentBranch ? ` for ${studentBranch}` : ''}.</p>
       )}
     </DashboardLayout>
   );
