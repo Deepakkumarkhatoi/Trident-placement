@@ -38,10 +38,15 @@ interface DriveJD {
   keyResponsibilities: string[];
   whyJoin: string[];
   selectionProcess: { description: string; eliminationRound: boolean }[];
+  minTenthPercent?: number;
+  minTwelfthPercent?: number;
+  minDiplomaPercent?: number;
+  minGraduationPercent?: number;
 }
 
 const BRANCHES = ['CSE', 'ETC', 'EEE', 'CIVIL', 'MECH', 'VLSI', 'IT', 'MBA', 'MCA'];
 const COURSES = ['B.Tech', 'M.Tech', 'MBA', 'MCA', 'B.Sc'];
+const MARKS_OPTIONS = [60, 70, 80, 90];
 
 const DEFAULT_JD: DriveJD = {
   companyName: '', role: '', driveType: 'ON_CAMPUS', lpa: '',
@@ -53,6 +58,8 @@ const DEFAULT_JD: DriveJD = {
   headquarters: '', roleOverview: '', requiredSkills: [''],
   keyResponsibilities: [''], whyJoin: [''],
   selectionProcess: [{ description: '', eliminationRound: true }],
+  minTenthPercent: undefined, minTwelfthPercent: undefined,
+  minDiplomaPercent: undefined, minGraduationPercent: undefined,
 };
 
 export default function CreateDrivePage() {
@@ -122,25 +129,31 @@ export default function CreateDrivePage() {
 
     setSaving(true);
     try {
-      // Step 1: Create the Drive
+      // Step 1: Create the Drive in DRAFT status (not published yet)
       const driveResponse = await adminDrivesApi.create({
         companyName: jd.companyName,
         role: jd.role,
         driveType: jd.driveType,
         lpaPackage: parseFloat(jd.lpa),
-        minimumCgpa: parseFloat(jd.cgpaCutoff),
+        minimumCgpa: parseFloat(jd.cgpaCutoff) || 0,
         lastDate: jd.lastDateApplication,
         description: jd.aboutCompany,
-        allowedBranches: jd.allowedBranches,
+        eligibleBranches: jd.allowedBranches,
         eligibleCourse: jd.eligibleCourse || undefined,
         passoutYear: jd.passoutYear ? parseInt(jd.passoutYear) : undefined,
+        minTenthPercent: jd.minTenthPercent,
+        minTwelfthPercent: jd.minTwelfthPercent,
+        minDiplomaPercent: jd.minDiplomaPercent,
+        minGraduationPercent: jd.minGraduationPercent,
+        status: 'DRAFT', // Create in DRAFT status, will be published after student selection
       });
 
       // Step 2: Create the JD for the drive
       await adminDrivesApi.upsertJD(driveResponse.id, jd);
 
       setSuccess(true);
-      setTimeout(() => router.push('/admin/drives'), 1500);
+      // Redirect back to drives management
+      setTimeout(() => router.push(`/admin/drives`), 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create drive');
     } finally {
@@ -241,7 +254,7 @@ export default function CreateDrivePage() {
         {success && (
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
             <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-green-800">Drive created successfully!</p>
+            <p className="text-sm text-green-800">Drive created successfully! Redirecting to drive management...</p>
           </div>
         )}
 
@@ -276,12 +289,12 @@ export default function CreateDrivePage() {
               {field('Batch', 'batch', 'text', 'e.g. 2026')}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {select('Eligible Course', 'eligibleCourse', ['', 'B.Tech', 'M.Tech', 'MBA', 'MCA', 'B.Sc'])}
               {field('Passout Year', 'passoutYear', 'text', 'e.g. 2026')}
+              {select('Eligible Course', 'eligibleCourse', ['', 'B.Tech', 'M.Tech', 'MBA', 'MCA', 'B.Sc'])}
             </div>
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase">Backlogs</label>
-              <div className="flex gap-4">
+              <label className="block text-xs font-medium text-muted-foreground uppercase">Backlogs</label>
+              <div className="flex gap-4 mt-2">
                 {[true, false].map(val => (
                   <label key={String(val)} className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="backlogs" checked={jd.backlogsAllowed === val}
@@ -291,6 +304,66 @@ export default function CreateDrivePage() {
                 ))}
               </div>
             </div>
+
+            <div className="space-y-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-blue-900">Career Eligibility Criteria</h3>
+              <p className="text-xs text-blue-700">Optional: Set minimum percentage requirements for student academic records</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase">
+                    10th Standard Minimum %
+                  </label>
+                  <select 
+                    value={jd.minTenthPercent || ''} 
+                    onChange={e => set('minTenthPercent', e.target.value ? parseInt(e.target.value) : undefined)} 
+                    disabled={saving}
+                    className="w-full px-3 py-2 rounded-lg border border-border text-sm bg-background text-foreground outline-none">
+                    <option value="">No minimum</option>
+                    {MARKS_OPTIONS.map(p => <option key={p} value={p}>Above {p}%</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase">
+                    12th Standard Minimum %
+                  </label>
+                  <select 
+                    value={jd.minTwelfthPercent || ''} 
+                    onChange={e => set('minTwelfthPercent', e.target.value ? parseInt(e.target.value) : undefined)} 
+                    disabled={saving}
+                    className="w-full px-3 py-2 rounded-lg border border-border text-sm bg-background text-foreground outline-none">
+                    <option value="">No minimum</option>
+                    {MARKS_OPTIONS.map(p => <option key={p} value={p}>Above {p}%</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase">
+                    Diploma Minimum %
+                  </label>
+                  <select 
+                    value={jd.minDiplomaPercent || ''} 
+                    onChange={e => set('minDiplomaPercent', e.target.value ? parseInt(e.target.value) : undefined)} 
+                    disabled={saving}
+                    className="w-full px-3 py-2 rounded-lg border border-border text-sm bg-background text-foreground outline-none">
+                    <option value="">No minimum</option>
+                    {MARKS_OPTIONS.map(p => <option key={p} value={p}>Above {p}%</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase">
+                    Graduation Minimum %
+                  </label>
+                  <select 
+                    value={jd.minGraduationPercent || ''} 
+                    onChange={e => set('minGraduationPercent', e.target.value ? parseInt(e.target.value) : undefined)} 
+                    disabled={saving}
+                    className="w-full px-3 py-2 rounded-lg border border-border text-sm bg-background text-foreground outline-none">
+                    <option value="">No minimum</option>
+                    {MARKS_OPTIONS.map(p => <option key={p} value={p}>Above {p}%</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase">
                 Branches <span className="text-red-500">*</span>
@@ -376,7 +449,7 @@ export default function CreateDrivePage() {
             className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium
               hover:bg-blue-700 disabled:opacity-60 transition-colors">
             <Save className="w-4 h-4" />
-            {saving ? 'Creating...' : 'Create & Publish'}
+            {saving ? 'Creating...' : 'Create Drive'}
           </button>
         </div>
       </div>

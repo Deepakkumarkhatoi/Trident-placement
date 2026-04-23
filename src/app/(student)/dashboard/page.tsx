@@ -12,6 +12,7 @@ export default function Home() {
   const [dateStr, setDateStr] = useState<string>('');
   const [stats, setStats] = useState<StatsData[]>([]);
   const [drives, setDrives] = useState<DriveData[]>([]);
+  const [totalDrives, setTotalDrives] = useState<number>(0);
   const [appliedDriveIds, setAppliedDriveIds] = useState<Set<string>>(new Set());
   const [studentName, setStudentName] = useState<string>('Student');
   const [studentBranch, setStudentBranch] = useState<string>('');
@@ -56,11 +57,17 @@ export default function Home() {
           });
         };
 
-        // Prefer eligible drives, fallback to open drives
+        // Combine both eligible and open drives for complete list
         const eligibleDrivesFiltered = filterDrivesByBranch(eligibleDrives);
         const openDrivesFiltered = filterDrivesByBranch(openDrives);
-        const drivesToShow = eligibleDrivesFiltered.length > 0 ? eligibleDrivesFiltered : openDrivesFiltered;
+        // Merge both arrays and remove duplicates by driveId
+        const allDrivesMap = new Map<string, DriveData>();
+        [...eligibleDrivesFiltered, ...openDrivesFiltered].forEach(drive => {
+          allDrivesMap.set(drive.id || '', drive);
+        });
+        const drivesToShow = Array.from(allDrivesMap.values());
         
+        setTotalDrives(drivesToShow.length);
         setDrives(drivesToShow.slice(0, 3));
 
         const appliedIds = new Set(applications.map(app => app.driveId?.toString() || ''));
@@ -131,7 +138,7 @@ export default function Home() {
       <div className="mt-6 md:mt-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">
-            // {studentBranch ? `${studentBranch} DRIVES` : 'ELIGIBLE DRIVES'}
+            // ALL DRIVES <span className="text-primary font-bold">({totalDrives})</span>
           </h2>
           <Link href="/drives" className="text-xs font-semibold text-primary ">
             View all →

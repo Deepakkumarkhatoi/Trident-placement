@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Skeleton } from '@/src/components/ui/skeleton';
-import { ArrowLeft, Users } from 'lucide-react';
+import { ArrowLeft, Users, Send } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { adminDrivesApi, type AdminDriveResponse } from '@/src/lib/api/admin.drives';
@@ -37,6 +37,18 @@ export default function DriveDetailPage() {
 
       {drive && (
         <>
+          <div className="flex gap-3 justify-end">
+            <Link href={`/admin/drives/${id}/select-students`}>
+              <Button className="gap-2 bg-blue-600 hover:bg-blue-700">
+                <Send className="w-4 h-4" />
+                Select & Send Students
+              </Button>
+            </Link>
+            <Link href={`/admin/drives/${id}/shortlist`}>
+              <Button variant="outline">View Shortlist</Button>
+            </Link>
+          </div>
+
           <Card>
             <CardHeader>
               <div className="flex items-start justify-between">

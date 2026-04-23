@@ -83,8 +83,14 @@ export default function Profile() {
                   { label: 'Batch', value: profile.batch },
                   { label: 'Roll Number', value: profile.rollNumber },
                   { label: 'Department', value: profile.department },
-                  { label: '10th Score', value: profile.score10th },
-                  { label: '12th Score', value: profile.score12th },
+                  { 
+                    label: '10th Score', 
+                    value: profile.score10th === 'N/A' ? 'N/A' : `${profile.score10th}%`
+                  },
+                  { 
+                    label: '12th Score', 
+                    value: profile.score12th === 'N/A' ? 'N/A' : `${profile.score12th}%`
+                  },
                 ].map((item) => (
                   <div key={item.label} className="flex justify-between items-center">
                     <span className="text-xs text-muted-foreground">{item.label}</span>

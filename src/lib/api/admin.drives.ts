@@ -15,6 +15,13 @@ export interface AdminDriveResponse {
   selectedCount: number;
   createdAt: string;
   updatedAt: string;
+  branches?: string[];
+  eligibleCourse?: string;
+  passoutYear?: number;
+  minTenthPercent?: number;
+  minTwelfthPercent?: number;
+  minDiplomaPercent?: number;
+  minGraduationPercent?: number;
 }
 
 export interface DriveCreateRequest {
@@ -25,9 +32,14 @@ export interface DriveCreateRequest {
   minimumCgpa: number;
   lastDate: string;
   description?: string;
-  allowedBranches: string[];
+  eligibleBranches: string[];
   eligibleCourse?: string;
   passoutYear?: number;
+  minTenthPercent?: number;
+  minTwelfthPercent?: number;
+  minDiplomaPercent?: number;
+  minGraduationPercent?: number;
+  status?: string; // DRAFT or OPEN
 }
 
 export interface DriveUpdateRequest {
@@ -116,4 +128,15 @@ export const adminDrivesApi = {
   // Student endpoint with eligibility enforcement
   getJDForStudent: (driveId: number | string, regdno: string) =>
     apiFetch<DriveJDResponse>(`/api/drives/${driveId}/jd?regdno=${encodeURIComponent(regdno)}`),
+
+  // Get eligible students for a drive based on criteria
+  getEligibleStudents: (driveId: number | string) =>
+    apiFetch<any[]>(`/api/admin/drives/${driveId}/eligible-students`),
+
+  // Publish a drive and optionally send to selected students
+  publishDrive: (driveId: number | string, selectedStudents?: string[]) =>
+    apiFetch<AdminDriveResponse>(`/api/admin/drives/${driveId}/publish`, {
+      method: 'PATCH',
+      body: selectedStudents ? JSON.stringify({ selectedStudents }) : undefined,
+    }),
 };

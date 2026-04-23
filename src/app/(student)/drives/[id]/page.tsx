@@ -199,6 +199,16 @@ function StudentJDView({ jd, onBack, driveId, alreadyApplied = false, onApplySuc
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [eligibilityErrorReason, setEligibilityErrorReason] = useState<string | null>(null);
 
+  console.log('StudentJDView received alreadyApplied:', alreadyApplied, 'hasApplied state:', hasApplied);
+
+  // Clear error when already applied
+  useEffect(() => {
+    if (hasApplied) {
+      setApplyError(null);
+      setShowErrorModal(false);
+    }
+  }, [hasApplied]);
+
   const handleApply = async () => {
     if (!session?.user) {
       setApplyError('Please sign in to apply');
@@ -604,16 +614,6 @@ function StudentJDView({ jd, onBack, driveId, alreadyApplied = false, onApplySuc
                 </>
               )}
             </button>
-            {jd.lastDateApplication && (
-              <p className="text-[11px] text-center text-amber-500 font-medium">
-                ⏰ Deadline: {formatDate(parseDate(jd.lastDateApplication))}
-              </p>
-            )}
-            {applyError && !showErrorModal && (
-              <p className="text-[11px] text-center text-destructive font-medium bg-destructive/10 p-2 rounded">
-                {applyError}
-              </p>
-            )}
           </div>
 
           {/* STUDENT: Eligibility Criteria Card */}
@@ -732,10 +732,13 @@ export default function DriveDetailPage({ params }: DriveDetailPageProps) {
 
         // Track which drives the student has applied to
         const appliedIds = new Set(applications.map(app => app.driveId?.toString() || ''));
+        console.log('All applied drive IDs:', Array.from(appliedIds));
+        console.log('Current drive ID:', params.id);
         setAppliedDrives(appliedIds);
 
         // Check if already applied to this drive
         const isApplied = appliedIds.has(params.id);
+        console.log('Is this drive already applied?', isApplied);
         setAlreadyApplied(isApplied);
 
         // Try to get eligibility-checked JD from student endpoint

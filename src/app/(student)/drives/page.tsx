@@ -5,22 +5,24 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/src/components/DashboardLayout';
 import DriveCard from '@/src/components/DriveCard';
-import { fetchDrives, fetchProfile, fetchEligibleDrives, DriveData } from '@/src/lib/backend';
-import { studentApplicationsApi } from '@/src/lib/api/student.applications';
+import { fetchDrives, fetchProfile, fetchEligibleDrives, fetchApplications, DriveData } from '@/src/lib/backend';
 import { Search, Filter } from 'lucide-react';
 
 export default function Drives() {
   const [allDrives, setAllDrives] = useState<DriveData[]>([]);
   const [appliedDriveIds, setAppliedDriveIds] = useState<Set<string>>(new Set());
-  const [filter, setFilter] = useState<'All' | 'On-Campus' | 'Virtual'>('All');
+  const [typeFilter, setTypeFilter] = useState<'All' | 'On-Campus' | 'Virtual'>('All');
+  const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Closed'>('All');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [studentBranch, setStudentBranch] = useState<string>('');
+  const [studentRollNumber, setStudentRollNumber] = useState<string>('');
 
-  const loadApplications = async () => {
+  const loadApplications = async (rollNumber: string) => {
     try {
-      const applications = await studentApplicationsApi.getMyApplications();
+      const applications = await fetchApplications(rollNumber);
       const appliedIds = new Set(applications.map(app => app.driveId.toString()));
+      console.log('Applied drive IDs:', appliedIds);
       setAppliedDriveIds(appliedIds);
     } catch (error) {
       console.error('Error loading applications:', error);
@@ -37,31 +39,40 @@ export default function Drives() {
         
         const branch = profile.department || '';
         setStudentBranch(branch);
+        setStudentRollNumber(profile.rollNumber);
         
-        // Try to fetch eligible drives first, fallback to all drives
-        let drivesData = await fetchEligibleDrives(profile.rollNumber);
-        if (!drivesData || drivesData.length === 0) {
-          drivesData = await fetchDrives();
-        }
+        // Fetch both eligible and open drives
+        const [eligibleDrivesData, openDrivesData] = await Promise.all([
+          fetchEligibleDrives(profile.rollNumber),
+          fetchDrives()
+        ]);
         
         // Filter drives by student's branch
         // If drive has no branches specified, it's open to all
         // If drive has branches, only show if student's branch is in the list
-        const filteredDrives = drivesData.filter(drive => {
-          if (!drive.branches || drive.branches.length === 0) {
-            // No branch restrictions, show to all students
-            return true;
-          }
-          // Show only if student's branch is in the allowed branches
-          return drive.branches.some(b => 
-            b.toUpperCase() === branch.toUpperCase()
-          );
-        });
+        const filterByBranch = (drives: DriveData[]) => {
+          return drives.filter(drive => {
+            if (!drive.branches || drive.branches.length === 0) {
+              return true;
+            }
+            return drive.branches.some(b => 
+              b.toUpperCase() === branch.toUpperCase()
+            );
+          });
+        };
         
-        setAllDrives(filteredDrives);
+        // Combine both eligible and open drives, remove duplicates
+        const eligibleFiltered = filterByBranch(eligibleDrivesData || []);
+        const openFiltered = filterByBranch(openDrivesData || []);
+        const allDrivesMap = new Map<string, DriveData>();
+        [...eligibleFiltered, ...openFiltered].forEach(drive => {
+          allDrivesMap.set(drive.id || '', drive);
+        });
+        const drivesData = Array.from(allDrivesMap.values());
+        setAllDrives(drivesData);
 
-        // Load applications using new API
-        await loadApplications();
+        // Load applications using the same API as dashboard
+        await loadApplications(profile.rollNumber);
       } catch (error) {
         console.error('Error loading drives:', error);
         setAllDrives([]);
@@ -78,13 +89,18 @@ export default function Drives() {
     setAppliedDriveIds(prev => new Set([...prev, driveId]));
     
     // Optionally refresh all applications
-    loadApplications();
+    if (studentRollNumber) {
+      loadApplications(studentRollNumber);
+    }
   };
 
   const filtered = allDrives.filter((d) => {
-    const matchType = filter === 'All' || d.type === filter;
+    const matchType = typeFilter === 'All' || d.type === typeFilter;
+    // If statusFilter is 'All', show all drives. Otherwise match the status (handle undefined status as 'Active')
+    const driveStatus = d.status || 'Active';
+    const matchStatus = statusFilter === 'All' || driveStatus === statusFilter;
     const matchSearch = d.company.toLowerCase().includes(search.toLowerCase()) || d.role.toLowerCase().includes(search.toLowerCase());
-    return matchType && matchSearch;
+    return matchType && matchStatus && matchSearch;
   });
 
   return (
@@ -107,27 +123,56 @@ export default function Drives() {
             className="w-full bg-card border border-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-50"
           />
         </div>
-        <div className="flex gap-2">
-          {(['All', 'On-Campus', 'Virtual'] as const).map((f) => (
+        <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2">
+            {(['All', 'On-Campus', 'Virtual'] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setTypeFilter(f)}
+                disabled={loading}
+                className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 whitespace-nowrap ${
+                  typeFilter === f
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-card text-muted-foreground border-border hover:border-primary/30'
+                }`}
+              >
+                <Filter className="w-3 h-3 inline mr-1.5" />
+                {f}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            {(['Active', 'Closed'] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setStatusFilter(f)}
+                disabled={loading}
+                className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 whitespace-nowrap ${
+                  statusFilter === f
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-card text-muted-foreground border-border hover:border-primary/30'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => setStatusFilter('All')}
               disabled={loading}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 ${
-                filter === f
+              className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 whitespace-nowrap ${
+                statusFilter === 'All'
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-card text-muted-foreground border-border hover:border-primary/30'
               }`}
             >
-              <Filter className="w-3 h-3 inline mr-1.5" />
-              {f}
+              All
             </button>
-          ))}
+          </div>
         </div>
       </div>
 
       <p className="text-xs text-muted-foreground mb-4">
-        {loading ? 'Loading...' : `${filtered.length} drive${filtered.length !== 1 ? 's' : ''} available for ${studentBranch || 'your branch'}`}
+        {loading ? 'Loading...' : `${filtered.length} drive${filtered.length !== 1 ? 's' : ''} ${statusFilter === 'All' ? '' : `(${statusFilter.toLowerCase()})`} available for ${studentBranch || 'your branch'}`}
       </p>
 
       {loading ? (
