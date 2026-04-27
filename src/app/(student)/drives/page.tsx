@@ -30,48 +30,23 @@ export default function Drives() {
     }
   };
 
+
   useEffect(() => {
     const loadDrives = async () => {
       try {
         setLoading(true);
         const profile = await fetchProfile();
         if (!profile) throw new Error('Failed to load student profile');
-        
+
         const branch = profile.department || '';
         setStudentBranch(branch);
         setStudentRollNumber(profile.rollNumber);
-        
-        // Fetch both eligible and open drives
-        const [eligibleDrivesData, openDrivesData] = await Promise.all([
-          fetchEligibleDrives(profile.rollNumber),
-          fetchDrives()
-        ]);
-        
-        // Filter drives by student's branch
-        // If drive has no branches specified, it's open to all
-        // If drive has branches, only show if student's branch is in the list
-        const filterByBranch = (drives: DriveData[]) => {
-          return drives.filter(drive => {
-            if (!drive.branches || drive.branches.length === 0) {
-              return true;
-            }
-            return drive.branches.some(b => 
-              b.toUpperCase() === branch.toUpperCase()
-            );
-          });
-        };
-        
-        // Combine both eligible and open drives, remove duplicates
-        const eligibleFiltered = filterByBranch(eligibleDrivesData || []);
-        const openFiltered = filterByBranch(openDrivesData || []);
-        const allDrivesMap = new Map<string, DriveData>();
-        [...eligibleFiltered, ...openFiltered].forEach(drive => {
-          allDrivesMap.set(drive.id || '', drive);
-        });
-        const drivesData = Array.from(allDrivesMap.values());
-        setAllDrives(drivesData);
 
-        // Load applications using the same API as dashboard
+        // ONLY call eligible drives — backend handles all filtering
+        // (branch + career marks). Do NOT call fetchDrives() here.
+        const eligibleDrivesData = await fetchEligibleDrives(profile.rollNumber);
+        setAllDrives(eligibleDrivesData || []);
+
         await loadApplications(profile.rollNumber);
       } catch (error) {
         console.error('Error loading drives:', error);
@@ -80,14 +55,14 @@ export default function Drives() {
         setLoading(false);
       }
     };
-
     loadDrives();
   }, []);
+
 
   const handleApplySuccess = (driveId: string) => {
     // Add the drive to applied set
     setAppliedDriveIds(prev => new Set([...prev, driveId]));
-    
+
     // Optionally refresh all applications
     if (studentRollNumber) {
       loadApplications(studentRollNumber);
@@ -130,11 +105,10 @@ export default function Drives() {
                 key={f}
                 onClick={() => setTypeFilter(f)}
                 disabled={loading}
-                className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 whitespace-nowrap ${
-                  typeFilter === f
+                className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 whitespace-nowrap ${typeFilter === f
                     ? 'bg-primary text-primary-foreground border-primary'
                     : 'bg-card text-muted-foreground border-border hover:border-primary/30'
-                }`}
+                  }`}
               >
                 <Filter className="w-3 h-3 inline mr-1.5" />
                 {f}
@@ -147,11 +121,10 @@ export default function Drives() {
                 key={f}
                 onClick={() => setStatusFilter(f)}
                 disabled={loading}
-                className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 whitespace-nowrap ${
-                  statusFilter === f
+                className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 whitespace-nowrap ${statusFilter === f
                     ? 'bg-primary text-primary-foreground border-primary'
                     : 'bg-card text-muted-foreground border-border hover:border-primary/30'
-                }`}
+                  }`}
               >
                 {f}
               </button>
@@ -159,11 +132,10 @@ export default function Drives() {
             <button
               onClick={() => setStatusFilter('All')}
               disabled={loading}
-              className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 whitespace-nowrap ${
-                statusFilter === 'All'
+              className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 whitespace-nowrap ${statusFilter === 'All'
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-card text-muted-foreground border-border hover:border-primary/30'
-              }`}
+                }`}
             >
               All
             </button>
@@ -184,10 +156,10 @@ export default function Drives() {
       ) : filtered.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((d, i) => (
-            <DriveCard 
-              key={d.id} 
-              {...d} 
-              delay={i * 100} 
+            <DriveCard
+              key={d.id}
+              {...d}
+              delay={i * 100}
               applied={appliedDriveIds.has(d.id.toString())}
               onApplySuccess={() => handleApplySuccess(d.id.toString())}
             />
