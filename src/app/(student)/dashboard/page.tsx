@@ -45,29 +45,23 @@ export default function Home() {
           fetchApplications(profile.rollNumber),
         ]);
 
-        // Filter drives by student's branch
-        const filterDrivesByBranch = (drives: DriveData[]) => {
-          return drives.filter(drive => {
-            if (!drive.branches || drive.branches.length === 0) {
-              return true; // No restrictions
-            }
-            return drive.branches.some(b => 
-              b.toUpperCase() === branch.toUpperCase()
-            );
-          });
-        };
-
-        // Combine both eligible and open drives for complete list
-        const eligibleDrivesFiltered = filterDrivesByBranch(eligibleDrives);
-        const openDrivesFiltered = filterDrivesByBranch(openDrives);
-        // Merge both arrays and remove duplicates by driveId
-        const allDrivesMap = new Map<string, DriveData>();
-        [...eligibleDrivesFiltered, ...openDrivesFiltered].forEach(drive => {
-          allDrivesMap.set(drive.id || '', drive);
+        // Filter all open drives by student's branch to get TOTAL CSE DRIVES
+        const allDrivesForBranch = (openDrives || []).filter(drive => {
+          if (!drive.branches || drive.branches.length === 0) {
+            return true; // No branch restriction
+          }
+          return drive.branches.some(b => b.toUpperCase() === branch.toUpperCase());
         });
-        const drivesToShow = Array.from(allDrivesMap.values());
+
+        // Sort eligible drives by lastDate (newest first)
+        const drivesToShow = (eligibleDrives || []).sort((a, b) => {
+          const dateA = new Date(a.lastDate).getTime();
+          const dateB = new Date(b.lastDate).getTime();
+          return dateB - dateA;
+        });
         
         setTotalDrives(drivesToShow.length);
+        // Take top 3 (most recently added)
         setDrives(drivesToShow.slice(0, 3));
 
         const appliedIds = new Set(applications.map(app => app.driveId?.toString() || ''));
@@ -75,9 +69,14 @@ export default function Home() {
 
         const dashboardStats: StatsData[] = [
           {
-            label: `${branch} Drives`,
-            value: drivesToShow.length,
+            label: `TOTAL ${branch} DRIVES`,
+            value: allDrivesForBranch.length,
             color: 'primary',
+          },
+          {
+            label: 'Eligible',
+            value: drivesToShow.length,
+            color: 'info',
           },
           {
             label: 'Applied To',
@@ -85,14 +84,9 @@ export default function Home() {
             color: 'success',
           },
           {
-            label: 'Shortlisted',
-            value: applications.filter(a => a.status === 'Shortlisted').length,
-            color: 'warning',
-          },
-          {
             label: 'Selected',
             value: applications.filter(a => a.status === 'Approved').length,
-            color: 'info',
+            color: 'warning',
           },
         ];
 
@@ -138,7 +132,7 @@ export default function Home() {
       <div className="mt-6 md:mt-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">
-            // ALL DRIVES <span className="text-primary font-bold">({totalDrives})</span>
+           // RECENTLY ADDED <span className="text-primary font-bold"></span>
           </h2>
           <Link href="/drives" className="text-xs font-semibold text-primary ">
             View all →
