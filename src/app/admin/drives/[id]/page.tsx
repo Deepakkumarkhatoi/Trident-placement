@@ -62,18 +62,29 @@ export default function DriveDetailPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[
-                  ['Drive Type',           drive.driveType],
-                  ['Package (LPA)',        drive.lpaPackage],
-                  ['Minimum CGPA',         drive.minimumCgpa],
-                  ['Application Deadline', drive.lastDate],
-                ].map(([label, val]) => (
-                  <div key={label as string}>
-                    <p className="text-sm text-muted-foreground">{label}</p>
-                    <p className="text-foreground font-medium mt-1">{val}</p>
-                  </div>
-                ))}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-6">
+                  {[
+                    ['Drive Type',           drive.driveType],
+                    ['Package (LPA)',        drive.lpaPackage],
+                  ].map(([label, val]) => (
+                    <div key={label as string}>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label}</p>
+                      <p className="text-foreground font-medium mt-2">{val}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  {[
+                    ['Minimum CGPA',         drive.minimumCgpa],
+                    ['Application Deadline', drive.lastDate],
+                  ].map(([label, val]) => (
+                    <div key={label as string}>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label}</p>
+                      <p className="text-foreground font-medium mt-2">{val}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
               {drive.description && (
                 <div className="mt-6 pt-6 border-t">

@@ -61,20 +61,20 @@ export default function StudentDetailPage() {
           <Card>
             <CardHeader><CardTitle className="text-2xl">{student.name}</CardTitle></CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-8">
                 {[
                   ['Email',           student.email],
-                  ['Reg No.',         student.regdno],
-                  ['Phone',           student.phno],
-                  ['Course',          student.course],
                   ['Branch',          student.branchCode],
+                  ['Reg No.',         student.regdno],
                   ['Admission Year',  student.admissionYear],
+                  ['Phone',           student.phno],
                   ['Degree YOP',      student.degreeYop],
+                  ['Course',          student.course],
                   ['College',         student.collegeName],
                 ].map(([label, val]) => val && val !== 'N/A' ? (
                   <div key={label as string}>
-                    <p className="text-sm text-muted-foreground">{label}</p>
-                    <p className="text-foreground font-medium mt-1">{val}</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label}</p>
+                    <p className="text-foreground font-medium mt-2">{val}</p>
                   </div>
                 ) : null)}
               </div>

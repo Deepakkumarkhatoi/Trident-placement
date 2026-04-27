@@ -69,14 +69,28 @@ export default function Drives() {
     }
   };
 
-  const filtered = allDrives.filter((d) => {
-    const matchType = typeFilter === 'All' || d.type === typeFilter;
-    // If statusFilter is 'All', show all drives. Otherwise match the status (handle undefined status as 'Active')
-    const driveStatus = d.status || 'Active';
-    const matchStatus = statusFilter === 'All' || driveStatus === statusFilter;
-    const matchSearch = d.company.toLowerCase().includes(search.toLowerCase()) || d.role.toLowerCase().includes(search.toLowerCase());
-    return matchType && matchStatus && matchSearch;
-  });
+  const filtered = allDrives
+    .filter((d) => {
+      // Type filter: 'All' shows all, otherwise match the type
+      const matchType = typeFilter === 'All' || d.type === typeFilter;
+      
+      // Status filter: 'All' shows all, otherwise match the status
+      const driveStatus = d.status || 'Active';
+      const matchStatus = statusFilter === 'All' || driveStatus === statusFilter;
+      
+      // Search filter: empty search matches all, otherwise search in company or role
+      const matchSearch = search === '' || 
+        d.company.toLowerCase().includes(search.toLowerCase()) || 
+        d.role.toLowerCase().includes(search.toLowerCase());
+      
+      return matchType && matchStatus && matchSearch;
+    })
+    .sort((a, b) => {
+      // Sort by lastDate - newest first
+      const dateA = new Date(a.lastDate).getTime();
+      const dateB = new Date(b.lastDate).getTime();
+      return dateB - dateA;
+    });
 
   return (
     <DashboardLayout>
@@ -110,7 +124,7 @@ export default function Drives() {
                     : 'bg-card text-muted-foreground border-border hover:border-primary/30'
                   }`}
               >
-                <Filter className="w-3 h-3 inline mr-1.5" />
+                {f === 'All' ? <Filter className="w-3 h-3 inline mr-1.5" /> : <Filter className="w-3 h-3 inline mr-1.5" />}
                 {f}
               </button>
             ))}
@@ -129,16 +143,6 @@ export default function Drives() {
                 {f}
               </button>
             ))}
-            <button
-              onClick={() => setStatusFilter('All')}
-              disabled={loading}
-              className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 whitespace-nowrap ${statusFilter === 'All'
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-card text-muted-foreground border-border hover:border-primary/30'
-                }`}
-            >
-              All
-            </button>
           </div>
         </div>
       </div>

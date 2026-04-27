@@ -104,16 +104,16 @@ function RoundStatusCell({
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="flex items-center gap-1 relative">
+    <div className="flex items-center justify-center relative w-full">
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm border transition-all whitespace-nowrap ${getStatusColor(status)} ${
+        className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-sm border transition-all ${getStatusColor(status)} ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-md'
         }`}
       >
         {getStatusIcon(status)}
-        <span className="hidden sm:inline font-medium">
+        <span className="font-medium text-xs">
           {status ? (status === 'PASSED' ? '✓ Passed' : '✗ Failed') : 'Pending'}
         </span>
         <ChevronDown className="w-3 h-3 opacity-60" />
@@ -545,10 +545,10 @@ export default function ShortlistPage() {
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-gray-200">
                   <TableHead className="font-semibold text-foreground">Student</TableHead>
-                  <TableHead className="font-semibold text-foreground text-center">Branch</TableHead>
+                  <TableHead className="font-semibold text-foreground text-center w-24">Branch</TableHead>
                   {rounds.map((roundName) => (
-                    <TableHead key={roundName} className="font-semibold text-foreground text-center">
-                      <div className="flex items-center justify-center gap-1">
+                  <TableHead key={roundName} className="font-semibold text-foreground text-center w-32">
+                    <div className="flex items-center justify-center gap-1 flex-wrap">
                         <Zap className="w-4 h-4" />
                         <span className="text-xs">{roundName.replace(/_/g, ' ')}</span>
                       </div>
@@ -583,11 +583,11 @@ export default function ShortlistPage() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-center py-4">
+                      <TableCell className="text-center py-4 w-24">
                         <Badge variant="outline">{app.branch}</Badge>
                       </TableCell>
                       {rounds.map((roundName) => (
-                        <TableCell key={roundName} className="text-center py-4 relative">
+                        <TableCell key={roundName} className="text-center py-4 relative w-32">
                           <RoundStatusCell
                             roundName={roundName}
                             status={app.roundStatus[roundName]}
