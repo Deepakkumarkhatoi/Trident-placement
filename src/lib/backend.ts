@@ -146,8 +146,8 @@ function mapStudentToProfile(student: any): StudentProfile {
     batch:          student.admissionYear?.toString() || student.batchId || '',
     rollNumber:     student.regdno || '',
     department:     student.branchCode || '',
-    score10th:      student.score10th || 'N/A',
-    score12th:      student.score12th || 'N/A',
+    score10th:      student.tenthPercentage ? student.tenthPercentage.toString() : 'N/A',
+    score12th:      student.twelvthPercentage ? student.twelvthPercentage.toString() : 'N/A',
     skills:         student.skills || [],
   };
 }

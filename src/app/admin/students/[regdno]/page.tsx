@@ -71,6 +71,8 @@ export default function StudentDetailPage() {
                   ['Degree YOP',      student.degreeYop],
                   ['Course',          student.course],
                   ['College',         student.collegeName],
+                  ['10th Score',      student.tenthPercentage ? `${student.tenthPercentage}%` : 'N/A'],
+                  ['12th Score',      student.twelvthPercentage ? `${student.twelvthPercentage}%` : 'N/A'],
                 ].map(([label, val]) => val && val !== 'N/A' ? (
                   <div key={label as string}>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label}</p>

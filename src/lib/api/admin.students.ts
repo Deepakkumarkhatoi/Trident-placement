@@ -45,6 +45,8 @@ export interface StudentDTO {
   status: string;
   collegeName?: string;
   cgpa?: number | string;
+  tenthPercentage?: number;
+  twelvthPercentage?: number;
 }
 
 export const adminStudentsApi = {
