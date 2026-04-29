@@ -25,16 +25,13 @@ import { Badge } from '@/src/components/ui/badge';
 interface EligibleStudent {
   regdno: string;
   name: string;
-  email: string;
-  branch: string;
+  branchCode: string;
   course: string;
+  degreeYop: number;
   tenthPercentage?: number;
-  twelvthPercentage?: number;
+  twelfthPercentage?: number;
   diplomaPercentage?: number;
   graduationPercentage?: number;
-  admissionYear?: number;
-  degreeYop?: number;
-  selected?: boolean;
 }
 
 interface DriveInfo {
@@ -85,8 +82,7 @@ export default function SelectStudentsPage() {
         !q ||
         s.name.toLowerCase().includes(q) ||
         s.regdno.toLowerCase().includes(q) ||
-        s.email.toLowerCase().includes(q) ||
-        s.branch.toLowerCase().includes(q)
+        s.branchCode.toLowerCase().includes(q)
     );
   }, [students, query]);
 
@@ -115,18 +111,16 @@ export default function SelectStudentsPage() {
       return;
     }
 
-    const headers = ['Registration No', 'Name', 'Email', 'Branch', 'Course', '10th %', '12th %', 'Diploma %', 'Graduation %', 'Admission Year', 'Degree YOP'];
+    const headers = ['Registration No', 'Name', 'Branch', 'Course', '10th %', '12th %', 'Diploma %', 'Graduation %', 'Degree YOP'];
     const rows = selected.map((s) => [
       s.regdno,
       s.name,
-      s.email,
-      s.branch,
+      s.branchCode,
       s.course,
       s.tenthPercentage || '-',
-      s.twelvthPercentage || '-',
+      s.twelfthPercentage || '-',
       s.diplomaPercentage || '-',
       s.graduationPercentage || '-',
-      s.admissionYear || '-',
       s.degreeYop || '-',
     ]);
 
@@ -195,8 +189,8 @@ export default function SelectStudentsPage() {
               </button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{drive?.companyName}</h1>
-              <p className="text-sm text-muted-foreground">Select eligible students and publish this drive</p>
+              <h1 className="text-2xl font-bold text-foreground">Select Students for {drive?.companyName}</h1>
+              <p className="text-sm text-muted-foreground mt-1">Review eligible students below and select who should receive this drive opportunity. Only selected students will see this drive in their dashboard.</p>
             </div>
           </div>
         </div>
@@ -250,42 +244,52 @@ export default function SelectStudentsPage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 justify-end flex-wrap">
-          {selectedStudents.size > 0 && (
-            <>
+        <div className="flex gap-3 justify-between items-center flex-wrap">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{selectedStudents.size}</span> student{selectedStudents.size !== 1 ? 's' : ''} selected
+            </p>
+          </div>
+          <div className="flex gap-3">
+            {selectedStudents.size > 0 && (
               <button
                 onClick={downloadCSV}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors"
               >
                 <Download className="w-4 h-4" />
-                Download ({selectedStudents.size})
+                Download CSV
               </button>
-              <button
-                onClick={handlePublish}
-                disabled={publishing}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-60 transition-colors"
-              >
-                <Send className="w-4 h-4" />
-                {publishing ? 'Publishing...' : 'Publish & Send'}
-              </button>
-            </>
-          )}
+            )}
+            <button
+              onClick={handlePublish}
+              disabled={publishing || selectedStudents.size === 0}
+              className="flex items-center gap-2 px-6 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            >
+              <Send className="w-4 h-4" />
+              {publishing ? 'Publishing...' : selectedStudents.size === 0 ? 'Select Students to Publish' : 'Publish & Send'}
+            </button>
+          </div>
         </div>
 
         {/* Students Table */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Eligible Students</CardTitle>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <CardTitle>Eligible Students ({filtered.length})</CardTitle>
+              <button
+                onClick={toggleAll}
+                disabled={filtered.length === 0}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border text-sm font-medium hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
                 <input
                   type="checkbox"
                   checked={selectedStudents.size === filtered.length && filtered.length > 0}
                   onChange={toggleAll}
-                  className="w-4 h-4 rounded border-border"
+                  className="w-4 h-4 rounded border-border cursor-pointer"
+                  disabled={filtered.length === 0}
                 />
-                <span className="text-sm font-medium">Select All</span>
-              </label>
+                <span>Select All</span>
+              </button>
             </div>
           </CardHeader>
           <CardContent>
@@ -293,38 +297,37 @@ export default function SelectStudentsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-12">
+                    <TableHead className="w-12 text-center">
                       <input
                         type="checkbox"
                         checked={selectedStudents.size === filtered.length && filtered.length > 0}
                         onChange={toggleAll}
-                        className="w-4 h-4 rounded border-border"
+                        className="w-4 h-4 rounded border-border cursor-pointer"
+                        disabled={filtered.length === 0}
                       />
                     </TableHead>
                     <TableHead>Registration No</TableHead>
                     <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
                     <TableHead>Branch</TableHead>
                     <TableHead>Course</TableHead>
                     <TableHead>10th %</TableHead>
                     <TableHead>12th %</TableHead>
                     <TableHead>Diploma %</TableHead>
                     <TableHead>Graduation %</TableHead>
-                    <TableHead>Admission Year</TableHead>
                     <TableHead>Degree YOP</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                         No students found
                       </TableCell>
                     </TableRow>
                   ) : (
                     filtered.map((student) => (
-                      <TableRow key={student.regdno} className={selectedStudents.has(student.regdno) ? 'bg-blue-50' : ''}>
-                        <TableCell>
+                      <TableRow key={student.regdno} className={`${selectedStudents.has(student.regdno) ? 'bg-blue-50' : ''} hover:bg-muted/50 cursor-pointer`}>
+                        <TableCell className="text-center">
                           <input
                             type="checkbox"
                             checked={selectedStudents.has(student.regdno)}
@@ -334,16 +337,14 @@ export default function SelectStudentsPage() {
                         </TableCell>
                         <TableCell className="font-medium">{student.regdno}</TableCell>
                         <TableCell>{student.name}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{student.email}</TableCell>
                         <TableCell>
-                          <Badge variant="outline">{student.branch}</Badge>
+                          <Badge variant="outline">{student.branchCode}</Badge>
                         </TableCell>
                         <TableCell>{student.course}</TableCell>
                         <TableCell className="text-center">{student.tenthPercentage || '-'}</TableCell>
-                        <TableCell className="text-center">{student.twelvthPercentage || '-'}</TableCell>
+                        <TableCell className="text-center">{student.twelfthPercentage || '-'}</TableCell>
                         <TableCell className="text-center">{student.diplomaPercentage || '-'}</TableCell>
                         <TableCell className="text-center">{student.graduationPercentage || '-'}</TableCell>
-                        <TableCell className="text-center">{student.admissionYear || '-'}</TableCell>
                         <TableCell className="text-center">{student.degreeYop || '-'}</TableCell>
                       </TableRow>
                     ))

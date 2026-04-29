@@ -152,8 +152,8 @@ export default function CreateDrivePage() {
       await adminDrivesApi.upsertJD(driveResponse.id, jd);
 
       setSuccess(true);
-      // Redirect back to drives management
-      setTimeout(() => router.push(`/admin/drives`), 1500);
+      // Redirect to review & publish page for student selection
+      setTimeout(() => router.push(`/admin/drives/${driveResponse.id}/select-students`), 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create drive');
     } finally {

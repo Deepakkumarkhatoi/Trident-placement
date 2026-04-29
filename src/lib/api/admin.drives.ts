@@ -134,9 +134,9 @@ export const adminDrivesApi = {
     apiFetch<any[]>(`/api/admin/drives/${driveId}/eligible-students`),
 
   // Publish a drive and optionally send to selected students
-  publishDrive: (driveId: number | string, selectedStudents?: string[]) =>
+  publishDrive: (driveId: number | string, selectedRegdnos?: string[]) =>
     apiFetch<AdminDriveResponse>(`/api/admin/drives/${driveId}/publish`, {
       method: 'PATCH',
-      body: selectedStudents ? JSON.stringify({ selectedStudents }) : undefined,
+      body: selectedRegdnos ? JSON.stringify({ selectedRegdnos }) : undefined,
     }),
 };

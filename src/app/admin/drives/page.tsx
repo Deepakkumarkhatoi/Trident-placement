@@ -12,7 +12,7 @@ import { Card, CardContent } from '@/src/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/components/ui/select';
 import { isDriveActive, getDriveStatusLabel } from '@/src/lib/utils';
 
-type StatusTab = 'ALL' | 'ACTIVE' | 'COMPLETED';
+type StatusTab = 'ALL' | 'ACTIVE' | 'CLOSED';
 
 interface DriveWithJD extends AdminDriveResponse {
   jd?: DriveJDResponse;
@@ -54,7 +54,7 @@ export default function DrivesPage() {
       const matchText = !q || d.companyName.toLowerCase().includes(q) || d.role.toLowerCase().includes(q);
       const isActive = isDriveActive(d.lastDate);
       const matchStatus =
-        statusTab === 'ALL' ? true : statusTab === 'ACTIVE' ? isActive : statusTab === 'COMPLETED' ? !isActive : true;
+        statusTab === 'ALL' ? true : statusTab === 'ACTIVE' ? isActive : statusTab === 'CLOSED' ? !isActive : true;
       
       const branchMatch = !d.jd?.allowedBranches || d.jd.allowedBranches.length === 0 
         ? true 
@@ -138,7 +138,7 @@ export default function DrivesPage() {
                 <SelectContent>
                   <SelectItem value="ALL">All Status</SelectItem>
                   <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="COMPLETED">Completed</SelectItem>
+                  <SelectItem value="CLOSED">Closed</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -165,11 +165,11 @@ export default function DrivesPage() {
               Active
             </Button>
             <Button
-              variant={statusTab === 'COMPLETED' ? 'default' : 'outline'}
+              variant={statusTab === 'CLOSED' ? 'default' : 'outline'}
               className="rounded-xl"
-              onClick={() => setStatusTab('COMPLETED')}
+              onClick={() => setStatusTab('CLOSED')}
             >
-              Completed
+              Closed
             </Button>
             <Button variant={statusTab === 'ALL' ? 'default' : 'outline'} className="rounded-xl" onClick={() => setStatusTab('ALL')}>
               All
