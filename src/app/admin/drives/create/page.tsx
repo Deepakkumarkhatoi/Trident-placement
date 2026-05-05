@@ -6,11 +6,6 @@ import { ArrowLeft, AlertCircle, CheckCircle2, Save, Plus, Trash2 } from 'lucide
 import Link from 'next/link';
 import { adminDrivesApi } from '@/src/lib/api/admin.drives';
 
-// ════════════════════════════════════════════════════════════════════════════════
-// ADMIN: Create Drive Form - Job Description Creation
-// No sample data. Form only. Backend handles everything.
-// ════════════════════════════════════════════════════════════════════════════════
-
 interface DriveJD {
   companyName: string;
   role: string;
@@ -24,12 +19,10 @@ interface DriveJD {
   serviceAgreement: string;
   joining: string;
   cgpaCutoff: string;
+  passoutYear: string;
   backlogsAllowed: boolean;
   allowedBranches: string[];
-  allowedCourses: string[];
-  batch: string;
-  eligibleCourse: string;
-  passoutYear: string;
+  allowedCourses: string[]; // ✅ MULTIPLE COURSES
   aboutCompany: string;
   website: string;
   headquarters: string;
@@ -46,14 +39,15 @@ interface DriveJD {
 
 const BRANCHES = ['CSE', 'ETC', 'EEE', 'CIVIL', 'MECH', 'VLSI', 'IT', 'MBA', 'MCA'];
 const COURSES = ['B.Tech', 'M.Tech', 'MBA', 'MCA', 'B.Sc'];
+const PASSOUT_YEARS = [2024, 2025, 2026, 2027, 2028];
 const MARKS_OPTIONS = [60, 70, 80, 90];
 
 const DEFAULT_JD: DriveJD = {
   companyName: '', role: '', driveType: 'ON_CAMPUS', lpa: '',
   lastDateApplication: '', jobLocation: '', employmentType: 'Full Time',
   workMode: 'On-Site', vacancies: '', serviceAgreement: '', joining: '',
-  cgpaCutoff: '', backlogsAllowed: false, allowedBranches: [],
-  allowedCourses: [], batch: '', eligibleCourse: '', passoutYear: '',
+  cgpaCutoff: '', passoutYear: '2026', backlogsAllowed: false, 
+  allowedBranches: [], allowedCourses: [],
   aboutCompany: '', website: '',
   headquarters: '', roleOverview: '', requiredSkills: [''],
   keyResponsibilities: [''], whyJoin: [''],
@@ -105,6 +99,7 @@ export default function CreateDrivePage() {
     set('allowedBranches', curr.includes(b) ? curr.filter(x => x !== b) : [...curr, b]);
   };
 
+  // ✅ TOGGLE MULTIPLE COURSES
   const toggleCourse = (c: string) => {
     const curr = jd.allowedCourses;
     set('allowedCourses', curr.includes(c) ? curr.filter(x => x !== c) : [...curr, c]);
@@ -119,6 +114,8 @@ export default function CreateDrivePage() {
     if (!jd.aboutCompany) e.aboutCompany = 'Required';
     if (!jd.roleOverview) e.roleOverview = 'Required';
     if (!jd.allowedBranches || jd.allowedBranches.length === 0) e.allowedBranches = 'Select at least one branch';
+    if (!jd.allowedCourses || jd.allowedCourses.length === 0) e.allowedCourses = 'Select at least one course';
+    if (!jd.passoutYear) e.passoutYear = 'Select passout year';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -129,7 +126,13 @@ export default function CreateDrivePage() {
 
     setSaving(true);
     try {
-      // Step 1: Create the Drive in DRAFT status (not published yet)
+      console.log('📤 Sending to backend:', {
+        allowedCourses: jd.allowedCourses,
+        passoutYear: jd.passoutYear,
+        allowedBranches: jd.allowedBranches
+      });
+
+      // Step 1: Create the Drive with MULTIPLE COURSES and PASSOUT_YEAR
       const driveResponse = await adminDrivesApi.create({
         companyName: jd.companyName,
         role: jd.role,
@@ -139,20 +142,25 @@ export default function CreateDrivePage() {
         lastDate: jd.lastDateApplication,
         description: jd.aboutCompany,
         eligibleBranches: jd.allowedBranches,
-        eligibleCourse: jd.eligibleCourse || undefined,
-        passoutYear: jd.passoutYear ? parseInt(jd.passoutYear) : undefined,
+        allowedCourses: jd.allowedCourses,  
+        passoutYear: parseInt(jd.passoutYear),
         minTenthPercent: jd.minTenthPercent,
         minTwelfthPercent: jd.minTwelfthPercent,
         minDiplomaPercent: jd.minDiplomaPercent,
         minGraduationPercent: jd.minGraduationPercent,
-        status: 'DRAFT', // Create in DRAFT status, will be published after student selection
       });
 
+      console.log('✅ Drive created:', driveResponse);
+
       // Step 2: Create the JD for the drive
-      await adminDrivesApi.upsertJD(driveResponse.id, jd);
+      await adminDrivesApi.upsertJD(driveResponse.id, {
+        ...jd,
+        allowedCourses: jd.allowedCourses,
+      });
+
+      console.log('✅ JD created with courses and passoutYear');
 
       setSuccess(true);
-      // Redirect to review & publish page for student selection
       setTimeout(() => router.push(`/admin/drives/${driveResponse.id}/select-students`), 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create drive');
@@ -286,12 +294,52 @@ export default function CreateDrivePage() {
             <h2 className="text-sm font-semibold text-foreground">Eligibility</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {field('CGPA Cutoff', 'cgpaCutoff', 'text', 'e.g. 6.0')}
-              {field('Batch', 'batch', 'text', 'e.g. 2026')}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {field('Passout Year', 'passoutYear', 'text', 'e.g. 2026')}
-              {select('Eligible Course', 'eligibleCourse', ['', 'B.Tech', 'M.Tech', 'MBA', 'MCA', 'B.Sc'])}
+
+            {/* ✅ COURSES - MULTI-SELECT BUTTONS */}
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase">
+                Eligible Courses <span className="text-red-500">*</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {COURSES.map(c => (
+                  <button key={c} onClick={() => toggleCourse(c)} disabled={saving}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors
+                      ${jd.allowedCourses.includes(c) ? 'bg-blue-500/15 text-blue-600 border-blue-300'
+                        : 'bg-background text-muted-foreground border-border'}`}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+              {errors.allowedCourses && (
+                <p className="flex items-center gap-1 text-red-500 text-xs mt-1">
+                  <AlertCircle className="w-3 h-3" />{errors.allowedCourses}
+                </p>
+              )}
             </div>
+
+            {/* ✅ PASSOUT YEAR - DROPDOWN */}
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase">
+                Passout Year <span className="text-red-500">*</span>
+              </label>
+              <select 
+                value={jd.passoutYear} 
+                onChange={e => set('passoutYear', e.target.value as any)}
+                disabled={saving}
+                className={`w-full px-3 py-2 rounded-lg border text-sm bg-background text-foreground outline-none
+                  ${errors.passoutYear ? 'border-red-500' : 'border-border'}`}>
+                {PASSOUT_YEARS.map(year => (
+                  <option key={year} value={String(year)}>{year}</option>
+                ))}
+              </select>
+              {errors.passoutYear && (
+                <p className="flex items-center gap-1 text-red-500 text-xs mt-1">
+                  <AlertCircle className="w-3 h-3" />{errors.passoutYear}
+                </p>
+              )}
+            </div>
+
             <div>
               <label className="block text-xs font-medium text-muted-foreground uppercase">Backlogs</label>
               <div className="flex gap-4 mt-2">
@@ -383,19 +431,6 @@ export default function CreateDrivePage() {
                   <AlertCircle className="w-3 h-3" />{errors.allowedBranches}
                 </p>
               )}
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase">Courses</label>
-              <div className="flex flex-wrap gap-2">
-                {COURSES.map(c => (
-                  <button key={c} onClick={() => toggleCourse(c)} disabled={saving}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors
-                      ${jd.allowedCourses.includes(c) ? 'bg-blue-500/15 text-blue-600 border-blue-300'
-                        : 'bg-background text-muted-foreground border-border'}`}>
-                    {c}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
 

@@ -15,8 +15,8 @@ export interface AdminDriveResponse {
   selectedCount: number;
   createdAt: string;
   updatedAt: string;
-  branches?: string[];
-  eligibleCourse?: string;
+  eligibleBranches?: string[];
+  allowedCourses?: string[];
   passoutYear?: number;
   minTenthPercent?: number;
   minTwelfthPercent?: number;
@@ -33,7 +33,7 @@ export interface DriveCreateRequest {
   lastDate: string;
   description?: string;
   eligibleBranches: string[];
-  eligibleCourse?: string;
+  allowedCourses?: string[];
   passoutYear?: number;
   minTenthPercent?: number;
   minTwelfthPercent?: number;
@@ -65,12 +65,10 @@ export interface DriveJDRequest {
   serviceAgreement: string;
   joining: string;
   cgpaCutoff: string;
+  passoutYear?: string;
   backlogsAllowed: boolean;
   allowedBranches: string[];
   allowedCourses: string[];
-  batch: string;
-  eligibleCourse?: string;
-  passoutYear?: string;
   aboutCompany: string;
   website: string;
   headquarters: string;

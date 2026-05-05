@@ -190,7 +190,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 // STUDENT: Display component for viewing job descriptions
 // Features: Beautiful card layouts, eligibility display, apply functionality
 
-function StudentJDView({ jd, onBack, driveId, alreadyApplied = false, onApplySuccess }: { jd: DriveJD; onBack?: () => void; driveId?: string | number; alreadyApplied?: boolean; onApplySuccess?: () => void }) {
+function StudentJDView({ jd, onBack, driveId, driveStatus = 'Active', alreadyApplied = false, onApplySuccess }: { jd: DriveJD; onBack?: () => void; driveId?: string | number; driveStatus?: 'Active' | 'Closed' | null; alreadyApplied?: boolean; onApplySuccess?: () => void }) {
   const { data: session } = useSession();
   const [isApplying, setIsApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
@@ -199,7 +199,15 @@ function StudentJDView({ jd, onBack, driveId, alreadyApplied = false, onApplySuc
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [eligibilityErrorReason, setEligibilityErrorReason] = useState<string | null>(null);
 
-  console.log('StudentJDView received alreadyApplied:', alreadyApplied, 'hasApplied state:', hasApplied);
+  const isClosed = driveStatus === 'Closed';
+
+  console.log('🎯 StudentJDView Props:', {
+    driveStatus,
+    isClosed,
+    alreadyApplied,
+    hasApplied,
+    companyName: jd.companyName
+  });
 
   // Clear error when already applied
   useEffect(() => {
@@ -397,6 +405,12 @@ function StudentJDView({ jd, onBack, driveId, alreadyApplied = false, onApplySuc
                 <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${driveTypeColor}`}>
                   {jd.driveType.replace('_', '-')}
                 </span>
+                {isClosed && (
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border
+                    bg-red-100/80 dark:bg-red-500/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30">
+                    CLOSED
+                  </span>
+                )}
                 {jd.workMode && (
                   <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border
                     bg-muted/50 text-muted-foreground border-border">
@@ -558,63 +572,87 @@ function StudentJDView({ jd, onBack, driveId, alreadyApplied = false, onApplySuc
         {/* STUDENT: Right sidebar - apply card and eligibility */}
         <div className="space-y-4">
 
-          {/* STUDENT: Apply Card */}
-          <div className="bg-card border border-primary/20 rounded-xl p-5 space-y-4 sticky top-24">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-foreground">{jd.lpa || '—'} lpa</p>
-              <p className="text-xs text-muted-foreground">Cost to Company</p>
-            </div>
-            <hr className="border-border" />
-            <div className="space-y-2">
-              <InfoRow label="Employment" value={jd.employmentType || 'Full Time'} />
-              <InfoRow label="Work Mode"  value={jd.workMode || '—'} />
-              <InfoRow label="Location"   value={jd.jobLocation || 'Not Specified'} />
-              {jd.serviceAgreement && <InfoRow label="Bond" value={jd.serviceAgreement} />}
-              {jd.joining && <InfoRow label="Joining" value={jd.joining} />}
-            </div>
-            <hr className="border-border" />
-            <button
-              onClick={handleApply}
-              disabled={isApplying || applySuccess || hasApplied}
-              className={`flex w-full items-center justify-center gap-2
-                font-semibold rounded-lg py-3 transition-colors text-sm
-                ${hasApplied
-                  ? 'bg-emerald-500/20 text-emerald-600 border border-emerald-200 cursor-not-allowed'
-                  : applySuccess 
-                  ? 'bg-emerald-500 text-white hover:bg-emerald-600' 
-                  : showErrorModal
-                  ? 'bg-cyan-400 hover:bg-cyan-300 text-black disabled:bg-cyan-300 disabled:opacity-70'
-                  : applyError && !showErrorModal
-                  ? 'bg-destructive text-white hover:bg-destructive/90'
-                  : 'bg-cyan-400 hover:bg-cyan-300 text-black disabled:bg-cyan-300 disabled:opacity-70'}`}
-            >
-              {hasApplied ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4" />
-                  Already Applied
-                </>
-              ) : isApplying ? (
-                <>
-                  <Loader className="w-4 h-4 animate-spin" />
-                  Applying...
-                </>
-              ) : applySuccess ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4" />
-                  Applied Successfully!
-                </>
-              ) : applyError ? (
-                <>
-                  <AlertCircle className="w-4 h-4" />
-                  Error
-                </>
+          {/* STUDENT: Apply Card or Closed Message */}
+          {isClosed ? (
+            // CLOSED DRIVE MESSAGE
+            <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                <h3 className="font-semibold text-red-900 dark:text-red-100">Drive Closed</h3>
+              </div>
+              <p className="text-sm text-red-700 dark:text-red-200">
+                This drive is no longer accepting applications. The application window has closed.
+              </p>
+              {alreadyApplied ? (
+                <div className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 rounded-lg p-3 flex items-center gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                  <span>You have already applied to this drive</span>
+                </div>
               ) : (
-                <>
-                  Apply Now <ExternalLink className="w-4 h-4" />
-                </>
+                <div className="text-xs text-red-600 dark:text-red-300 italic">
+                  If you had applied earlier, check your applications for updates.
+                </div>
               )}
-            </button>
-          </div>
+            </div>
+          ) : (
+            // ACTIVE DRIVE - APPLY CARD
+            <div className="bg-card border border-primary/20 rounded-xl p-5 space-y-4 sticky top-24">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-foreground">{jd.lpa || '—'} lpa</p>
+                <p className="text-xs text-muted-foreground">Cost to Company</p>
+              </div>
+              <hr className="border-border" />
+              <div className="space-y-2">
+                <InfoRow label="Employment" value={jd.employmentType || 'Full Time'} />
+                <InfoRow label="Work Mode"  value={jd.workMode || '—'} />
+                <InfoRow label="Location"   value={jd.jobLocation || 'Not Specified'} />
+                {jd.serviceAgreement && <InfoRow label="Bond" value={jd.serviceAgreement} />}
+                {jd.joining && <InfoRow label="Joining" value={jd.joining} />}
+              </div>
+              <hr className="border-border" />
+              <button
+                onClick={handleApply}
+                disabled={isApplying || applySuccess || hasApplied}
+                className={`flex w-full items-center justify-center gap-2
+                  font-semibold rounded-lg py-3 transition-colors text-sm
+                  ${hasApplied
+                    ? 'bg-emerald-500/20 text-emerald-600 border border-emerald-200 cursor-not-allowed'
+                    : applySuccess 
+                    ? 'bg-emerald-500 text-white hover:bg-emerald-600' 
+                    : showErrorModal
+                    ? 'bg-cyan-400 hover:bg-cyan-300 text-black disabled:bg-cyan-300 disabled:opacity-70'
+                    : applyError && !showErrorModal
+                    ? 'bg-destructive text-white hover:bg-destructive/90'
+                    : 'bg-cyan-400 hover:bg-cyan-300 text-black disabled:bg-cyan-300 disabled:opacity-70'}`}
+              >
+                {hasApplied ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    Already Applied
+                  </>
+                ) : isApplying ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    Applying...
+                  </>
+                ) : applySuccess ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    Applied Successfully!
+                  </>
+                ) : applyError ? (
+                  <>
+                    <AlertCircle className="w-4 h-4" />
+                    Error
+                  </>
+                ) : (
+                  <>
+                    Apply Now <ExternalLink className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </div>
+          )}
 
           {/* STUDENT: Eligibility Criteria Card */}
           <div className="bg-card border border-border rounded-xl p-4 space-y-4">
@@ -703,6 +741,7 @@ interface DriveDetailPageProps {
 export default function DriveDetailPage({ params }: DriveDetailPageProps) {
   const { data: session } = useSession();
   const [jd, setJd] = useState<DriveJD | null>(null);
+  const [driveStatus, setDriveStatus] = useState<'Active' | 'Closed' | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [eligibilityReason, setEligibilityReason] = useState<string | null>(null);
@@ -741,6 +780,16 @@ export default function DriveDetailPage({ params }: DriveDetailPageProps) {
         console.log('Is this drive already applied?', isApplied);
         setAlreadyApplied(isApplied);
 
+        // Fetch drive info to get status
+        let driveInfo: any;
+        try {
+          driveInfo = await adminDrivesApi.getById(params.id);
+          console.log('📍 Drive info fetched:', driveInfo);
+          console.log('📍 Drive status field:', driveInfo?.status);
+        } catch (driveErr) {
+          console.warn('Could not fetch drive info for status:', driveErr);
+        }
+
         // Try to get eligibility-checked JD from student endpoint
         let response: any = await adminDrivesApi.getJDForStudent(params.id, regdno);
         
@@ -757,6 +806,31 @@ export default function DriveDetailPage({ params }: DriveDetailPageProps) {
         // Normalize the response to handle different field names from backend
         const normalizedJD = normalizeJDResponse(response);
         setJd(normalizedJD);
+        
+        // Determine drive status
+        let status: 'Active' | 'Closed' = 'Active';
+        console.log('🔍 Determining drive status...');
+        console.log('   - driveInfo?.status:', driveInfo?.status);
+        console.log('   - lastDateApplication:', normalizedJD.lastDateApplication);
+        
+        // Check by backend status first, but also verify the date
+        if (driveInfo?.status === 'CLOSED' || driveInfo?.status === 'Closed') {
+          console.log('✅ Using status from driveInfo: CLOSED');
+          status = 'Closed';
+        } else if (normalizedJD.lastDateApplication) {
+          // Check if lastDate has passed - this determines if drive is closed
+          const lastDate = parseDate(normalizedJD.lastDateApplication);
+          const now = new Date();
+          console.log('✅ Checking date:');
+          console.log('   - Parsed lastDate:', lastDate);
+          console.log('   - Current date:', now);
+          console.log('   - Has passed?:', lastDate && lastDate < now);
+          if (lastDate && lastDate < now) {
+            status = 'Closed';
+          }
+        }
+        console.log('✅ Final status determined:', status);
+        setDriveStatus(status);
         setError(null);
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Failed to load job description';
@@ -877,7 +951,7 @@ export default function DriveDetailPage({ params }: DriveDetailPageProps) {
             <ArrowLeft className="w-4 h-4" /> Back to All Drives
           </a>
         </div>
-        <StudentJDView jd={jd} driveId={params.id} alreadyApplied={alreadyApplied} onApplySuccess={handleApplySuccess} />
+        <StudentJDView jd={jd} driveId={params.id} driveStatus={driveStatus} alreadyApplied={alreadyApplied} onApplySuccess={handleApplySuccess} />
       </div>
     </div>
   );
