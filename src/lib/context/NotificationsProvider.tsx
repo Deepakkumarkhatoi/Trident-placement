@@ -41,7 +41,6 @@ export const NotificationsProvider = ({ children }: { children: React.ReactNode 
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
 
-  // Fetch initial count and set up polling
   useEffect(() => {
     refreshCount();
     // Poll every 30 seconds for new notifications

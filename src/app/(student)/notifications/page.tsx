@@ -35,9 +35,7 @@ const colorMap: Record<NotifType, string> = {
   drive: 'text-primary bg-primary/10',
 };
 
-/**
- * Convert ShortlistNotification from backend to UI Notification format
- */
+
 function convertToUINotification(notif: ShortlistNotification): Notification {
   const isSuccess = notif.status === 'PASSED';
   const type: NotifType = isSuccess ? 'success' : 'warning';

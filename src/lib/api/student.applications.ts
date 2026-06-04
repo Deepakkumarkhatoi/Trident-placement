@@ -1,28 +1,18 @@
-/**
- * Frontend API Client: Student Applications
- * Location: src/lib/api/student.applications.ts
- * 
- * Handles all student-facing application operations:
- * - Apply to a drive
- * - Retrieve my applications
- * - Check if already applied
- */
+
 
 import { apiFetch } from './client';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ApplyToDriveRequest {
-  // Currently empty, but ready for future fields like:
-  // resumeUrl?: string;
-  // customFields?: Record<string, string>;
+
 }
 
 export interface ApplyToDriveResponse {
   success: boolean;
   applicationId: number;
   message: string;
-  appliedDate: string; // ISO 8601 datetime
+  appliedDate: string; 
 }
 
 export interface RoundStatus {
@@ -33,9 +23,9 @@ export interface MyApplication {
   applicationId: number;
   driveId: number;
   companyName: string;
-  appliedDate: string; // ISO 8601 datetime
+  appliedDate: string; 
   status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
-  roundStatus: RoundStatus; // e.g., { "APTI": "PASSED", "DSA": "PENDING" }
+  roundStatus: RoundStatus; 
 }
 
 export interface ApplicationStatusCheck {
@@ -56,9 +46,6 @@ export interface ApplicationStatusCheck {
  * @throws - 404 if drive not found
  * @throws - 409 if duplicate application
  * 
- * Example:
- * const result = await studentApplicationsApi.apply(123);
- * console.log(result.applicationId); // 456
  */
 export async function apply(driveId: number): Promise<ApplyToDriveResponse> {
   try {
@@ -82,7 +69,6 @@ export async function apply(driveId: number): Promise<ApplyToDriveResponse> {
       throw new Error('Drive not found');
     }
     if (message.includes('400')) {
-      // Backend should provide specific error message
       throw new Error(message);
     }
     

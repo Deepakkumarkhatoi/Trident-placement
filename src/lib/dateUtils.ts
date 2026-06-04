@@ -1,6 +1,3 @@
-/**
- * Date utility functions for consistent formatting across the application
- */
 
 /**
  * Format a date string to "Mon DD, YYYY" format (e.g., "Oct 04, 2026")
@@ -34,7 +31,7 @@ export function formatApplicationDate(input: string | Date | null | undefined): 
  * Supports: DD-MM-YYYY, DD-MM-YY, DD/MM/YYYY, DD/MM/YY
  */
 function parseCustomDateFormat(dateString: string): string {
-  // Try DD-MM-YY or DD-MM-YYYY format (e.g., "21-04-26" or "21-04-2026")
+
   const dmy = dateString.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})$/);
   if (dmy) {
     const [_, day, month, year] = dmy;
@@ -64,14 +61,10 @@ function parseCustomDateFormat(dateString: string): string {
     }
   }
   
-  // If all parsing fails, return original string
+
   return dateString;
 }
 
-/**
- * Format date for display in Indian format (DD-MMM-YYYY)
- * Example: "04-Oct-2026"
- */
 export function formatDateIndian(input: string | Date | null | undefined): string {
   if (!input) return '';
   
@@ -93,9 +86,7 @@ export function formatDateIndian(input: string | Date | null | undefined): strin
   }
 }
 
-/**
- * Format date as ISO string (YYYY-MM-DD)
- */
+
 export function formatDateISO(input: string | Date | null | undefined): string {
   if (!input) return '';
   
@@ -110,9 +101,7 @@ export function formatDateISO(input: string | Date | null | undefined): string {
   }
 }
 
-/**
- * Check if a date is in the past
- */
+
 export function isPastDate(input: string | Date | null | undefined): boolean {
   if (!input) return false;
   
@@ -125,9 +114,7 @@ export function isPastDate(input: string | Date | null | undefined): boolean {
   }
 }
 
-/**
- * Get days remaining until a deadline
- */
+
 export function getDaysRemaining(input: string | Date | null | undefined): number {
   if (!input) return 0;
   

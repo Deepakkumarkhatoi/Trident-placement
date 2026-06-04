@@ -4,7 +4,7 @@ export interface StudentCgpaInfo {
   regdno: string;
   name: string;
   cgpa: number;
-  lastUpdated: string; // ISO timestamp
+  lastUpdated: string; 
 }
 
 export interface CgpaRefreshResponse {

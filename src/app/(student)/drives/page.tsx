@@ -26,7 +26,6 @@ export default function Drives() {
       setAppliedDriveIds(appliedIds);
     } catch (error) {
       console.error('Error loading applications:', error);
-      // Continue without applications - don't block the page
     }
   };
 
@@ -42,8 +41,6 @@ export default function Drives() {
         setStudentBranch(branch);
         setStudentRollNumber(profile.rollNumber);
 
-        // ONLY call eligible drives — backend handles all filtering
-        // (branch + career marks). Do NOT call fetchDrives() here.
         const eligibleDrivesData = await fetchEligibleDrives(profile.rollNumber);
         setAllDrives(eligibleDrivesData || []);
 

@@ -730,9 +730,6 @@ function StudentJDView({ jd, onBack, driveId, driveStatus = 'Active', alreadyApp
 // ═══════════════════════════════════════════════════════════════════════════════
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ PAGE COMPONENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ═══════════════════════════════════════════════════════════════════════════════
-// STUDENT: Default page component for viewing job descriptions
-// Usage: /drives/[id] - Students view job details and apply here
-// Data comes from backend (created by admins via /admin/drives/create)
 
 interface DriveDetailPageProps {
   params: { id: string };

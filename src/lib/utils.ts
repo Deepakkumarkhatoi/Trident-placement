@@ -12,18 +12,16 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function isDriveActive(lastDate: string): boolean {
   try {
-    // Parse the date - handle both formats: YYYY-MM-DD and DD-MM-YY/YYYY
     let deadline: Date;
     
     if (lastDate.includes('-')) {
       const parts = lastDate.split('-');
       if (parts[0].length === 4) {
-        // Format: YYYY-MM-DD
         deadline = new Date(lastDate);
       } else {
-        // Format: DD-MM-YY or DD-MM-YYYY
+
         let year = parseInt(parts[2], 10);
-        // Convert 2-digit year to 4-digit year (00-99 becomes 2000-2099)
+
         if (year < 100) {
           year += 2000;
         }
@@ -33,15 +31,14 @@ export function isDriveActive(lastDate: string): boolean {
       deadline = new Date(lastDate);
     }
 
-    // Set deadline to end of day (23:59:59)
+  
     deadline.setHours(23, 59, 59, 999);
 
-    // Compare with current date
     const now = new Date();
     return now <= deadline;
   } catch (error) {
     console.error('Error parsing date:', lastDate, error);
-    // Default to active if we can't parse the date
+
     return true;
   }
 }

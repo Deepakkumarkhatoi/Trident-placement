@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import { getSession } from "next-auth/react";
 
 // ── Auth helpers ──────────────────────────────────────────────────────────────
@@ -108,17 +103,13 @@ function mapDriveData(backendDrive: any): DriveData {
     id:          backendDrive.id || '',
     company:     companyName,
     role:        backendDrive.role || '',
-    // Backend sends driveType not type
     type:        backendDrive.driveType || backendDrive.type || '',
-    // Backend sends lpaPackage not lpa
     lpa:         backendDrive.lpaPackage?.toString() || backendDrive.lpa || '',
-    // Backend sends minimumCgpa not cgpa
     cgpa:        backendDrive.minimumCgpa?.toString() || backendDrive.cgpa || '',
     lastDate:    lastDate,
     description: backendDrive.description || '',
     initial:     companyName.charAt(0).toUpperCase(),
     color:       getColorForCompany(companyName),
-    // Capture branches from backend - could be allowedBranches, branches, or eligibleBranches
     branches:    backendDrive.allowedBranches || backendDrive.branches || backendDrive.eligibleBranches || [],
     status:      status,
   };
@@ -170,8 +161,7 @@ async function studentFetch<T>(path: string): Promise<T | null> {
 }
 
 // ── Student-facing API functions ──────────────────────────────────────────────
-// These call student endpoints (/api/drives, /api/applications, etc.)
-// Admin endpoints are handled separately in src/lib/api/admin.*.ts
+
 
 export async function fetchProfile(): Promise<StudentProfile | null> {
   const data = await studentFetch<any>(`/api/profile`);
@@ -207,7 +197,7 @@ export async function fetchApplications(studentId: string): Promise<ApplicationD
   const data = await studentFetch<any[]>(`/api/applications/${studentId}`);
   if (!Array.isArray(data)) return [];
 
-  // Fetch drives once to map LPA — avoids calling fetchOpenDrives inside a loop
+
   const drives = await fetchOpenDrives();
   const driveMap = new Map(drives.map(d => [d.id.toString(), d.lpa]));
 

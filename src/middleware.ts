@@ -79,7 +79,7 @@ export default withAuth(
 
     const menuBlade = token?.menuBlade as MenuBlade | undefined;
 
-    // If no role data → allow
+    
     if (!menuBlade) {
       return NextResponse.next();
     }

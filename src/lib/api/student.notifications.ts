@@ -1,39 +1,33 @@
 import { apiFetch } from './client';
 
-/**
- * Backend response format - what the server actually returns
- */
+
 export interface StudentNotificationDTO {
   id: number;
   driveId: number;
   driveName: string;
-  round: string;  // backend returns 'round', not 'roundName'
-  statusNotified: 'PASSED' | 'FAILED';  // backend returns statusNotified
+  round: string;  
+  statusNotified: 'PASSED' | 'FAILED';  
   sentAt: string;
   notificationType?: string;
 }
 
-/**
- * Frontend internal format - normalized for UI
- */
+
 export interface ShortlistNotification {
   id: number;
   driveId: number;
   driveName: string;
-  roundName: string;  // mapped from 'round'
-  status: 'PASSED' | 'FAILED';  // mapped from 'statusNotified'
+  roundName: string;  
+  status: 'PASSED' | 'FAILED'; 
   sentAt: string;
   message?: string;
 }
 
-/**
- * Convert backend format to frontend format
- */
+
 function mapNotification(dto: any): ShortlistNotification {
   console.log('🔍 DTO structure:', dto);
   console.log('🔍 Available keys:', Object.keys(dto));
   
-  // Try different field names the backend might use
+
   const status = dto.statusNotified || dto.status_notified || dto.status || 'PASSED';
   const round = dto.round || dto.roundName || '';
   
@@ -52,20 +46,15 @@ function mapNotification(dto: any): ShortlistNotification {
 }
 
 export const studentNotificationsApi = {
-  /**
-   * Fetch all notifications for the current student
-   * Note: apiFetch unwraps .data automatically, so we get the array directly
-   */
+
   async getNotifications(): Promise<ShortlistNotification[]> {
     try {
-      // apiFetch returns (data.data ?? data), so we get the array directly
       const notificationsData = await apiFetch<StudentNotificationDTO[]>(
         '/api/student/notifications'
       );
       
       console.log('📬 Raw notifications from backend:', notificationsData);
-      
-      // Map backend DTOs to frontend format
+
       const mapped = (Array.isArray(notificationsData) ? notificationsData : []).map(mapNotification);
       console.log('📬 Mapped notifications:', mapped);
       
